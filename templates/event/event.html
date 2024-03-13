@@ -1,0 +1,24 @@
+{% import "components/input.html" as input %}
+{% import "components/button.html" as button %}
+<div class="flex flex-col gap-10">
+	<header class="text-left">
+		<p class="text-sm font-medium text-ctp-latte-overlay-100 dark:text-ctp-mocha-overlay-100">EVENT</p>
+		<h1 class="text-4xl font-bold text-ctp-latte-teal dark:text-ctp-mocha-teal">{{ name }}</h1>
+		{% if let Some(date) = date %}
+		<p class="text-xl">{{ date }}</p>
+		{% endif %}
+	</header>
+
+	<div id="guest_list" hx-get="/guests" hx-vals='{ "event_id": "{{ event_id }}" }' hx-trigger="load"></div>
+
+	<div class="p-8 w-full rounded-lg shadow-md bg-ctp-latte-mantle dark:bg-ctp-mocha-mantle">
+		<div class="mb-6 text-2xl font-bold">What should be your contribution?</div>
+		<form class="space-y-4" hx-post="/guests" hx-swap="innerHTML" hx-target="#guest_list"
+			hx-on:after-request="this.reset()">
+			<input hidden name="event_id" id="event_id" value="{{ event_id }}" />
+			{% call input::text(form_id="form_new_guest", name="food", required=true) %}
+			{% call input::text(form_id="form_new_guest", name="name", required=true) %}
+			{% call button::submit() %}
+		</form>
+	</div>
+</div>

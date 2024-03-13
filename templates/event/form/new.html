@@ -1,0 +1,14 @@
+{% import "components/input.html" as input %}
+{% import "components/button.html" as button %}
+
+<div id="form_event_new_container" class="flex justify-center items-center mt-10">
+	<div class="p-8 w-1/2 rounded-lg shadow-md bg-ctp-latte-mantle dark:bg-ctp-mocha-mantle">
+		<div class="mb-6 text-2xl font-bold">Creating a new event?</div>
+		<form class="space-y-4" id="event_form_new" hx-post="/events" hx-target="#form_event_new_container"
+			hx-swap="outerHTML">
+			{%- call input::text(form_id="event_form_new", name="name", required=true) -%}<br>
+			{%- call input::date_inline(form_id="event_form_new", name="date", required=false) -%}<br>
+			{%- call button::submit() -%}
+		</form>
+	</div>
+</div>

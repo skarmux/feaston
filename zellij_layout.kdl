@@ -1,0 +1,22 @@
+layout {
+    cwd "./"
+    tab split_direction="horizontal" focus=true hide_floating_panes=true {
+        pane stacked=true focus=true {
+            pane name="helix" command="fish" expanded=true {
+                args "-c" "eval $(direnv export fish) && hx src/main.rs"
+            }
+            pane name="bacon" command="fish" start_suspended=true {
+                args "-c" "eval $(direnv export fish) && bacon clippy"
+            }
+            pane name="cargo watch" command="fish" expanded=true {
+                args "-c" "eval $(direnv export fish) && cargo watch -x run"
+            }
+            pane name="tailwindcss" command="fish" expanded=true {
+                args "-c" "eval $(direnv export fish) && tailwindcss -i styles/tailwind.css -o assets/main.css --watch"
+            }
+        }
+        pane size=1 borderless=true {
+            plugin location="zellij:compact-bar"
+        }
+    }
+}
