@@ -9,15 +9,16 @@
 		{% endif %}
 	</header>
 
-	<div id="guest_list" hx-get="/guests" hx-vals='{ "event_id": "{{ event_id }}" }' hx-trigger="load"></div>
+	<div id="contribution_list" hx-get="/contributions" hx-vals='{ "event_id": "{{ event_id }}" }' hx-trigger="load">
+	</div>
 
 	<div class="p-8 w-full rounded-lg shadow-md bg-ctp-latte-mantle dark:bg-ctp-mocha-mantle">
 		<div class="mb-6 text-2xl font-bold">What should be your contribution?</div>
-		<form class="space-y-4" hx-post="/guests" hx-swap="innerHTML" hx-target="#guest_list"
+		<form class="space-y-4" hx-post="/contributions" hx-swap="innerHTML" hx-target="#contribution_list"
 			hx-on:after-request="this.reset()">
 			<input hidden name="event_id" id="event_id" value="{{ event_id }}" />
-			{% call input::text(form_id="form_new_guest", name="food", required=true) %}
-			{% call input::text(form_id="form_new_guest", name="name", required=true) %}
+			{% call input::text(form_id="form_new_contribution", name="food", required=true) %}
+			{% call input::text(form_id="form_new_contribution", name="name", required=true) %}
 			{% call button::submit() %}
 		</form>
 	</div>

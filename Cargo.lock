@@ -599,6 +599,38 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "25cbce373ec4653f1a01a31e8a5e5ec0c622dc27ff9c4e6606eefef5cbbed4a5"
 
 [[package]]
+name = "feaston"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "askama",
+ "axum",
+ "axum-htmx",
+ "clap",
+ "dotenv",
+ "env_logger",
+ "futures",
+ "icu",
+ "itertools",
+ "listenfd",
+ "log",
+ "rand",
+ "rayon",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "thiserror",
+ "time",
+ "tokio",
+ "tower",
+ "tower-http",
+ "tower-livereload",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
 name = "finl_unicode"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -954,38 +986,6 @@ dependencies = [
  "pin-project-lite",
  "socket2",
  "tokio",
-]
-
-[[package]]
-name = "ibring"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "askama",
- "axum",
- "axum-htmx",
- "clap",
- "dotenv",
- "env_logger",
- "futures",
- "icu",
- "itertools",
- "listenfd",
- "log",
- "rand",
- "rayon",
- "serde",
- "serde_json",
- "sqlx",
- "thiserror",
- "time",
- "tokio",
- "tower",
- "tower-http",
- "tower-livereload",
- "tracing",
- "tracing-subscriber",
- "uuid",
 ]
 
 [[package]]

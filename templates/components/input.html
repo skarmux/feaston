@@ -14,6 +14,7 @@
 
 {% macro date_inline(form_id, name, required) %}
 <div x-data="app()" x-init="[initDate(), setNoOfDaysAndBlanks()]" x-cloak>
+    <input type="hidden" name="date" x-ref="date" :value="datepickerValue" />
     <div class="flex justify-between items-center mb-2">
         <button type="button" class="inline-flex text-ctp-mocha-teal p-1 rounded-full hover:bg-ctp-mocha-base"
             @click="if (month == 0) { year--; month = 12; } month--; setNoOfDaysAndBlanks()">
@@ -61,7 +62,7 @@
         return {
             datepickerValue: "",
             selectedDate: "",
-            dateFormat: "DD-MM-YYYY",
+            dateFormat: "YYYY-MM-DD",
             month: "",
             year: "",
             no_of_days: null,

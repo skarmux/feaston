@@ -25,7 +25,7 @@ pub fn router() -> Router {
 #[derive(Deserialize, Debug)]
 struct CreateEvent {
     name: String,
-    date: Option<Date>,
+    date: Date,
 }
 
 #[derive(Template)]

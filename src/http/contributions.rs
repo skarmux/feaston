@@ -15,9 +15,9 @@ pub fn router() -> Router {
         .route("/contributions/:id/edit", get(get_contribution_edit))
 }
 
-enum FoodCategory {
-    Appetizer, Salad, Meat, Beverage, Dessert, Casserole, Pasta
-}
+// enum FoodCategory {
+//     Appetizer, Salad, Meat, Beverage, Dessert, Casserole, Pasta
+// }
 
 #[derive(Template,serde::Serialize)]
 #[template(path = "contribution/list.html")]

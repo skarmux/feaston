@@ -2,8 +2,8 @@ use anyhow::Context;
 use clap::Parser;
 use sqlx::PgPool;
 
-use ibring::config::Config;
-use ibring::http;
+use feaston::config::Config;
+use feaston::http;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
