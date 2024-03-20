@@ -17,19 +17,13 @@
 
     flake-utils.url = "github:numtide/flake-utils";
 
-    rust-overlay = {
-      url = "github:oxalica/rust-overlay";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        flake-utils.follows = "flake-utils";
-      };
+    rust-overlay.url = "github:oxalica/rust-overlay";
+    rust-overlay.inputs = {
+      nixpkgs.follows = "nixpkgs";
+      flake-utils.follows = "flake-utils";
     };
 
-    # nixos-generators = {
-    #   url = "github:nix-community/nixos-generators";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    # };
-  };
+};
 
   outputs = { self, nixpkgs, flake-utils, rust-overlay, crane, fenix, ... }:
     flake-utils.lib.eachDefaultSystem (system:
@@ -42,13 +36,9 @@
 
         inherit (pkgs) lib;
 
-        # rustToolchain = pkgs.pkgsBuildHost.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
-        # craneLib = (crane.mkLib pkgs).overrideToolchain rustToolchain;
-        craneLib = crane.lib.${system};
-        # src = craneLib.cleanCargoSource (craneLib.path ./.);
-
-        # sqlFilter = path: _type: null != builtins.match ".*sql$" path;
-        # sqlOrCargo = path: type: (sqlFilter path type) || (craneLib.filterCargoSources path type);
+        rustToolchain = pkgs.pkgsBuildHost.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
+        craneLib = (crane.mkLib pkgs).overrideToolchain rustToolchain;
+        # craneLib = crane.lib.${system};
 
         src = lib.cleanSourceWith {
           src = craneLib.path ./.; # The original, unfiltered source
@@ -76,6 +66,7 @@
           buildInputs = [
             pkgs.openssl
           ];
+          DATABASE_URL = "postgresql://postgres:_H63ViA;7\"/13t$-@34.107.125.3:2665/feaston-db";
         };
 
         craneLibLLvmTools = craneLib.overrideToolchain
@@ -99,7 +90,9 @@
           ];
 
           preBuild = ''
-            export DATABASE_URL=postgresql://root:AURA53Lucario4130@192.168.178.22:2665/ibringdb
+            # export DATABASE_URL=postgresql://postgres:_H63ViA;7\"/13t$-@34.107.125.3:2665/feaston-db
+            # export DATABASE_URL=postgresql://root:AURA53Lucario4130@192.168.178.22:2665/ibringdb
+            # export DATABASE_URL=sqlite:./sqlite.db
             sqlx database create
             sqlx migrate run
           '';
@@ -113,14 +106,6 @@
         packages = {
           default = feaston;
           inherit feaston;
-
-        # google-cloud = nixos-generators.nixosGenerate {
-        #   system = system;
-        #   modules = [
-        #     ./configuration.nix
-        #   ];
-        #   format = "gce";
-        # };
         };
 
         devShells.default = craneLib.devShell {
@@ -129,7 +114,6 @@
 
           # Additional dev-shell environment variables can be set directly
           # PROJECT_ID = "voltaic-layout-417220";
-          # BUCKET_NAME = "feaston-bucket";
           
           # Extra inputs can be added here; cargo and rustc are provided by default.
           packages = with pkgs; [
