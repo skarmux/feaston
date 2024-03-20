@@ -13,7 +13,7 @@ use time::{Date, format_description};
 use uuid::Uuid;
 use serde::Deserialize;
 
-use crate::http::{ApiContext, Result, types::HtmlTemplate, contributions::{Contribution, ContributionFromQuery}};
+use crate::http::{ApiContext, Result, types::HtmlTemplate};
 
 pub fn router() -> Router {
     Router::new()
@@ -33,8 +33,7 @@ struct CreateEvent {
 struct EventPartTemp {
     event_id: Uuid,
     name: String,
-    date: Option<String>,
-    contributions: Vec<Contribution>
+    date: String,
 }
 
 #[derive(Template)]
@@ -50,19 +49,20 @@ struct NewEventFormTemplate {}
 pub struct Event {
     pub id: Uuid,
     pub name: String,
-    pub date: Option<Date>,
+    pub date: Date,
 }
 
+#[derive(Debug)]
 struct EventFromQuery {
-    event_id: Uuid,
+    event_id: String,
     name: String,
-    date: Option<Date>,
+    date: Date,
 }
 
 impl EventFromQuery {
     fn into_event(self) -> Event {
         Event {
-            id: self.event_id,
+            id: Uuid::try_parse(self.event_id.as_str()).unwrap(),
             name: self.name,
             date: self.date,
         }
@@ -76,37 +76,20 @@ async fn get_event(
 ) -> Result<impl IntoResponse> {
     let event = sqlx::query_as!(
         EventFromQuery,
-        r#"
-            select
-                event_id,
-                name,
-                date
-            from event
-            where event_id = $1
-        "#,
+        "select event_id, name, date from event where event_id = ?",
         event_id
     )
+    .map(EventFromQuery::into_event)
     .fetch_one(&ctx.db)
     .await
-    .context("database error")?
-    .into_event();
-
-    let contributions = sqlx::query_as!(
-        ContributionFromQuery,
-        r#"select contribution_id, event_id, guest_name, food_name from contribution where event_id = $1"#,
-        event_id
-    )
-    .map(ContributionFromQuery::into_contribution)
-    .fetch_all(&ctx.db)
-    .await
-    .context("database error while fetching guests for event")?;
+    .context("database error")?;
 
     tracing::debug!("{:?}", &event.date);
 
     if partial {        
-        Ok(HtmlTemplate(EventPartTemp { event_id: event.id, name: event.name, date: event.date.map(|d| d.format(&format_description::parse("[weekday], [day].[month].[year]").unwrap()).unwrap()), contributions }).into_response())
+        Ok(HtmlTemplate(EventPartTemp { event_id: event.id, name: event.name, date: event.date.format(&format_description::parse("[weekday], [day].[month].[year]").unwrap()).unwrap() }).into_response())
     } else {
-        Ok(HtmlTemplate(EventBaseTemp { content: EventPartTemp { event_id: event.id, name: event.name, date: event.date.map(|d| d.format(&format_description::parse("[weekday], [day].[month].[year]").unwrap()).unwrap()), contributions }}).into_response()) 
+        Ok(HtmlTemplate(EventBaseTemp { content: EventPartTemp { event_id: event.id, name: event.name, date: event.date.format(&format_description::parse("[weekday], [day].[month].[year]").unwrap()).unwrap() }}).into_response()) 
     }
 }
 

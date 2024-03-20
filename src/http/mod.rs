@@ -1,9 +1,10 @@
-// use crate::config::Config;
-// use std::sync::Arc;
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use clap::Parser;
+use crate::config::Config;
 use anyhow::Context;
 use askama::Template;
 use axum::{Router, response::IntoResponse, routing::get};
-use sqlx::PgPool;
+use sqlx::SqlitePool;
 
 /// Define common error type.
 mod error;
@@ -26,10 +27,10 @@ use tower_http::{trace::TraceLayer, add_extension::AddExtensionLayer, services::
 #[derive(Clone)]
 struct ApiContext {
     // config: Arc<Config>,
-    db: PgPool,
+    db: SqlitePool,
 }
 
-pub async fn serve(/*config: Config,*/ db: PgPool) -> anyhow::Result<()> {
+pub async fn serve(/*config: Config,*/ db: SqlitePool) -> anyhow::Result<()> {
     let assets_path = std::env::current_dir().unwrap();
 
     let app = api_router().layer(
@@ -42,7 +43,11 @@ pub async fn serve(/*config: Config,*/ db: PgPool) -> anyhow::Result<()> {
     ).nest_service("/assets", ServeDir::new(format!("{}/assets", assets_path.to_str().unwrap())))
     .nest_service("/favicon.ico", ServeDir::new(format!("{}/assets/favicon.ico", assets_path.to_str().unwrap())));
 
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:4040")
+    let config = Config::parse();
+
+    let socket = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), config.port);
+
+    let listener = tokio::net::TcpListener::bind(socket)
         .await
         .unwrap();
 

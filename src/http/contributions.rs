@@ -15,10 +15,6 @@ pub fn router() -> Router {
         .route("/contributions/:id/edit", get(get_contribution_edit))
 }
 
-// enum FoodCategory {
-//     Appetizer, Salad, Meat, Beverage, Dessert, Casserole, Pasta
-// }
-
 #[derive(Template,serde::Serialize)]
 #[template(path = "contribution/list.html")]
 struct ContributionsTableTemplate {
@@ -32,14 +28,6 @@ struct Createcontribution {
     food: String,
 }
 
-// #[derive(serde::Deserialize)]
-// struct Updatecontribution {
-//     id: i64,
-//     event_id: Uuid, // verify that this contribution is updated from within event group
-//     name: Option<String>,
-//     food: Option<String>,
-// }
-
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct Contribution {
     pub id: i64,
@@ -51,7 +39,7 @@ pub struct Contribution {
 #[derive(Debug)]
 pub struct ContributionFromQuery {
     pub contribution_id: i64,
-    pub event_id: Uuid,
+    pub event_id: String,
     pub guest_name: String,
     pub food_name: String,
 }
@@ -60,7 +48,7 @@ impl ContributionFromQuery {
     pub fn into_contribution(self) -> Contribution {
         Contribution {
             id: self.contribution_id,
-            event_id: self.event_id,
+            event_id: Uuid::try_parse(self.event_id.as_str()).unwrap(),
             guest_name: self.guest_name,
             food_name: self.food_name,
         }
@@ -70,7 +58,10 @@ impl ContributionFromQuery {
 async fn get_contribution(ctx: Extension<ApiContext>, Path(contribution_id): Path<i32>) -> Result<impl IntoResponse> {
     let contribution = sqlx::query_as!(
         ContributionFromQuery,
-        r#"select contribution_id, event_id, guest_name, food_name from contribution where contribution_id = $1"#,
+        r#"SELECT contribution_id, event_id, guest_name, food_name 
+FROM contribution 
+WHERE contribution_id = ?;
+"#,
         contribution_id
     ).map(ContributionFromQuery::into_contribution).fetch_one(&ctx.db).await.context("Failed to load contribution from database")?;
 
@@ -79,7 +70,7 @@ async fn get_contribution(ctx: Extension<ApiContext>, Path(contribution_id): Pat
 
 #[derive(serde::Deserialize)]
 struct Params {
-    event_id: Uuid
+    event_id: String
 }
 
 async fn get_contributions(
@@ -95,7 +86,7 @@ async fn get_contributions(
                 guest_name,
                 food_name
             from contribution
-            where event_id = $1
+            where event_id = ?
             order by created_at
         "#,
         params.event_id
@@ -113,7 +104,7 @@ async fn create_contribution(
     Form(contribution): Form<Createcontribution>,
 ) -> Result<impl IntoResponse> {
     let _contribution_id = sqlx::query!(
-        r#"insert into contribution (event_id, guest_name, food_name) VALUES ($1, $2, $3) returning contribution_id"#,
+        r#"insert into contribution (event_id, guest_name, food_name) VALUES (?,?,?) returning contribution_id"#,
         contribution.event_id,
         contribution.name,
         contribution.food,
@@ -131,7 +122,7 @@ async fn create_contribution(
                 guest_name,
                 food_name
             from contribution
-            where event_id = $1
+            where event_id = ?
             order by created_at
         "#,
         contribution.event_id
@@ -155,7 +146,7 @@ async fn get_contribution_edit(
 ) -> Result<impl IntoResponse> {
     let contribution = sqlx::query_as!(
         ContributionFromQuery,
-        r#"select contribution_id, event_id, guest_name, food_name from contribution where contribution_id = $1"#,
+        r#"select contribution_id, event_id, guest_name, food_name from contribution where contribution_id = ?"#,
         contribution_id
     ).map(ContributionFromQuery::into_contribution).fetch_one(&ctx.db).await.context("Failed to load contribution from database")?;
 

@@ -1,6 +1,6 @@
 use anyhow::Context;
 use clap::Parser;
-use sqlx::PgPool;
+use sqlx::SqlitePool;
 
 use feaston::config::Config;
 use feaston::http;
@@ -13,7 +13,7 @@ async fn main() -> anyhow::Result<()> {
 
     let config = Config::parse();
 
-    let db = PgPool::connect(&config.database_url)
+    let db = SqlitePool::connect(&config.database_url)
         .await
         .context("could not connect to database")?;
 

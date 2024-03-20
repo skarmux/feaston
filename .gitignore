@@ -17,3 +17,5 @@ result-*/
 
 # Cargo root
 .cargo/
+
+sqlite.*
