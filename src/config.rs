@@ -7,7 +7,7 @@ pub struct Config {
     /// The connection URL for the database this application should use.
     #[arg(long, env)]
     pub database_url: String,
-    // /// The HMAC signing and verification key used for login tokens (JWTs).
-    // #[arg(long)]
-    // pub hmac_key: String,
+    /// The connection port.
+    #[arg(long, env, default_value_t = 8080)]
+    pub port: u16,
 }

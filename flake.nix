@@ -38,8 +38,8 @@
 
         rustToolchain = pkgs.pkgsBuildHost.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
         craneLib = (crane.mkLib pkgs).overrideToolchain rustToolchain;
-        # craneLib = crane.lib.${system};
 
+        # Filter sources that requre rebuilds on change
         src = lib.cleanSourceWith {
           src = craneLib.path ./.; # The original, unfiltered source
           filter = path: type:
@@ -66,7 +66,6 @@
           buildInputs = [
             pkgs.openssl
           ];
-          DATABASE_URL = "postgresql://postgres:_H63ViA;7\"/13t$-@34.107.125.3:2665/feaston-db";
         };
 
         craneLibLLvmTools = craneLib.overrideToolchain
@@ -90,11 +89,10 @@
           ];
 
           preBuild = ''
-            # export DATABASE_URL=postgresql://postgres:_H63ViA;7\"/13t$-@34.107.125.3:2665/feaston-db
-            # export DATABASE_URL=postgresql://root:AURA53Lucario4130@192.168.178.22:2665/ibringdb
-            # export DATABASE_URL=sqlite:./sqlite.db
+            export DATABASE_URL=sqlite:./sqlite.db
             sqlx database create
             sqlx migrate run
+            tailwindcss -i styles/tailwind.css -o assets/main.css
           '';
         });
       in
@@ -114,6 +112,7 @@
 
           # Additional dev-shell environment variables can be set directly
           # PROJECT_ID = "voltaic-layout-417220";
+          DATABASE_URL="sqlite:./sqlite.db";
           
           # Extra inputs can be added here; cargo and rustc are provided by default.
           packages = with pkgs; [

@@ -5,7 +5,6 @@ use axum::{
     routing::get,
     Router, Extension, response::IntoResponse, extract::{Query, Path}, Form,
 };
-// use axum_htmx::HxResponseTrigger;
 use uuid::Uuid;
 
 pub fn router() -> Router {
@@ -15,30 +14,25 @@ pub fn router() -> Router {
         .route("/contributions/:id/edit", get(get_contribution_edit))
 }
 
-// enum FoodCategory {
-//     Appetizer, Salad, Meat, Beverage, Dessert, Casserole, Pasta
-// }
-
 #[derive(Template,serde::Serialize)]
 #[template(path = "contribution/list.html")]
 struct ContributionsTableTemplate {
     contributions: Vec<Contribution>,
 }
 
+#[derive(Template,serde::Serialize)]
+#[template(path = "contribution.html")]
+struct ContributionTemplate {
+    food_name: String,
+    guest_name: String,
+}
+
 #[derive(serde::Deserialize)]
-struct Createcontribution {
+struct CreateContribution {
     event_id: Uuid,
     name: String,
     food: String,
 }
-
-// #[derive(serde::Deserialize)]
-// struct Updatecontribution {
-//     id: i64,
-//     event_id: Uuid, // verify that this contribution is updated from within event group
-//     name: Option<String>,
-//     food: Option<String>,
-// }
 
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct Contribution {
@@ -70,7 +64,7 @@ impl ContributionFromQuery {
 async fn get_contribution(ctx: Extension<ApiContext>, Path(contribution_id): Path<i32>) -> Result<impl IntoResponse> {
     let contribution = sqlx::query_as!(
         ContributionFromQuery,
-        r#"select contribution_id, event_id, guest_name, food_name from contribution where contribution_id = $1"#,
+        r#"select contribution_id, event_id as "event_id: uuid::Uuid", guest_name, food_name from contribution where contribution_id = ?;"#,
         contribution_id
     ).map(ContributionFromQuery::into_contribution).fetch_one(&ctx.db).await.context("Failed to load contribution from database")?;
 
@@ -79,7 +73,7 @@ async fn get_contribution(ctx: Extension<ApiContext>, Path(contribution_id): Pat
 
 #[derive(serde::Deserialize)]
 struct Params {
-    event_id: Uuid
+    event_id: String
 }
 
 async fn get_contributions(
@@ -91,11 +85,11 @@ async fn get_contributions(
         r#"
             select
                 contribution_id,
-                event_id,
+                event_id as "event_id: uuid::Uuid",
                 guest_name,
                 food_name
             from contribution
-            where event_id = $1
+            where event_id = ?
             order by created_at
         "#,
         params.event_id
@@ -110,10 +104,10 @@ async fn get_contributions(
 
 async fn create_contribution(
     ctx: Extension<ApiContext>,
-    Form(contribution): Form<Createcontribution>,
+    Form(contribution): Form<CreateContribution>,
 ) -> Result<impl IntoResponse> {
-    let _contribution_id = sqlx::query!(
-        r#"insert into contribution (event_id, guest_name, food_name) VALUES ($1, $2, $3) returning contribution_id"#,
+    let contribution_id = sqlx::query!(
+        r#"insert into contribution (event_id, guest_name, food_name) VALUES (?,?,?) returning contribution_id"#,
         contribution.event_id,
         contribution.name,
         contribution.food,
@@ -122,25 +116,7 @@ async fn create_contribution(
     .await
     .context("could not add new contribution")?;
 
-    let contributions = sqlx::query_as!(
-        ContributionFromQuery,
-        r#"
-            select
-                contribution_id,
-                event_id,
-                guest_name,
-                food_name
-            from contribution
-            where event_id = $1
-            order by created_at
-        "#,
-        contribution.event_id
-    )
-    .map(|row| row.into_contribution())
-    .fetch_all(&ctx.db)
-    .await?;
-
-    Ok(HtmlTemplate(ContributionsTableTemplate { contributions }))
+    Ok(HtmlTemplate(ContributionTemplate { food_name: contribution.food, guest_name: contribution.name }))
 }
 
 #[derive(Template)]
@@ -151,11 +127,11 @@ struct ContributionEditTemplate {
 
 async fn get_contribution_edit(
     ctx: Extension<ApiContext>,
-    Path(contribution_id): Path<i32>
+    Path(contribution_id): Path<i64>
 ) -> Result<impl IntoResponse> {
     let contribution = sqlx::query_as!(
         ContributionFromQuery,
-        r#"select contribution_id, event_id, guest_name, food_name from contribution where contribution_id = $1"#,
+        r#"select contribution_id, event_id as "event_id: uuid::Uuid", guest_name, food_name from contribution where contribution_id = ?;"#,
         contribution_id
     ).map(ContributionFromQuery::into_contribution).fetch_one(&ctx.db).await.context("Failed to load contribution from database")?;
 
