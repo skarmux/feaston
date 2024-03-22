@@ -2,22 +2,14 @@ use crate::http::{ApiContext, Result, HtmlTemplate};
 use anyhow::Context;
 use askama::Template;
 use axum::{
-    routing::get,
+    routing::post,
     Router, Extension, response::IntoResponse, extract::{Query, Path}, Form,
 };
 use uuid::Uuid;
 
 pub fn router() -> Router {
     Router::new()
-        .route("/contributions", get(get_contributions).post(create_contribution))
-        .route("/contributions/:id", get(get_contribution))
-        .route("/contributions/:id/edit", get(get_contribution_edit))
-}
-
-#[derive(Template,serde::Serialize)]
-#[template(path = "contribution/list.html")]
-struct ContributionsTableTemplate {
-    contributions: Vec<Contribution>,
+        .route("/contributions", post(create_contribution))
 }
 
 #[derive(Template,serde::Serialize)]
@@ -61,45 +53,9 @@ impl ContributionFromQuery {
     }
 }
 
-async fn get_contribution(ctx: Extension<ApiContext>, Path(contribution_id): Path<i32>) -> Result<impl IntoResponse> {
-    let contribution = sqlx::query_as!(
-        ContributionFromQuery,
-        r#"select contribution_id, event_id as "event_id: uuid::Uuid", guest_name, food_name from contribution where contribution_id = ?;"#,
-        contribution_id
-    ).map(ContributionFromQuery::into_contribution).fetch_one(&ctx.db).await.context("Failed to load contribution from database")?;
-
-    Ok(HtmlTemplate(ContributionsTableTemplate { contributions: vec![contribution]}))
-}
-
 #[derive(serde::Deserialize)]
 struct Params {
     event_id: String
-}
-
-async fn get_contributions(
-    ctx: Extension<ApiContext>,
-    params: Query<Params>
-) -> Result<impl IntoResponse> {
-    let contributions = sqlx::query_as!(
-        ContributionFromQuery,
-        r#"
-            select
-                contribution_id,
-                event_id as "event_id: uuid::Uuid",
-                guest_name,
-                food_name
-            from contribution
-            where event_id = ?
-            order by created_at
-        "#,
-        params.event_id
-    )
-    .map(|row| row.into_contribution())
-    .fetch_all(&ctx.db)
-    .await
-    .unwrap();
-
-    Ok(HtmlTemplate(ContributionsTableTemplate { contributions }))
 }
 
 async fn create_contribution(
@@ -117,23 +73,4 @@ async fn create_contribution(
     .context("could not add new contribution")?;
 
     Ok(HtmlTemplate(ContributionTemplate { food_name: contribution.food, guest_name: contribution.name }))
-}
-
-#[derive(Template)]
-#[template(path = "contribution/edit.html")]
-struct ContributionEditTemplate {
-    contribution: Contribution
-}
-
-async fn get_contribution_edit(
-    ctx: Extension<ApiContext>,
-    Path(contribution_id): Path<i64>
-) -> Result<impl IntoResponse> {
-    let contribution = sqlx::query_as!(
-        ContributionFromQuery,
-        r#"select contribution_id, event_id as "event_id: uuid::Uuid", guest_name, food_name from contribution where contribution_id = ?;"#,
-        contribution_id
-    ).map(ContributionFromQuery::into_contribution).fetch_one(&ctx.db).await.context("Failed to load contribution from database")?;
-
-    Ok(HtmlTemplate(ContributionEditTemplate { contribution }))
 }

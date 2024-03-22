@@ -74,6 +74,10 @@ impl EventFromQuery {
     }
 }
 
+async fn index( ) -> Result<impl IntoResponse> {
+    Ok(HtmlTemplate(NewEventFormTemplate {}).into_response())
+}
+
 async fn get_event(
     ctx: Extension<ApiContext>,
     Path(event_id): Path<Uuid>
@@ -108,10 +112,6 @@ async fn get_event(
     }).into_response()) 
 }
 
-async fn index( ) -> Result<impl IntoResponse> {
-    Ok(HtmlTemplate(NewEventFormTemplate {}).into_response())
-}
-
 async fn create_event(
     ctx: Extension<ApiContext>,
     Form(event): Form<CreateEvent>,
@@ -128,10 +128,4 @@ async fn create_event(
     .context("could not insert new event into database")?;
 
     Ok(HtmlTemplate(EventCreatedTemp { event_id: uuid }).into_response())
-    // Ok((
-    //     // HxPushUrl(format!("/event/{event_id}").parse::<Uri>().unwrap()),
-    //     HxRedirect(format!("/event/{uuid}").parse::<Uri>().unwrap()),
-    //     ""
-    //     // HtmlTemplate(EventPartTemp { event_id, name: event.name, date: event.date.map(|d| d.format(&format_description::parse("[day].[month].[year]").unwrap()).unwrap()), guests: vec![]})
-    // ).into_response())
 }
