@@ -92,7 +92,6 @@
             export DATABASE_URL=sqlite:./sqlite.db
             sqlx database create
             sqlx migrate run
-            tailwindcss -i styles/tailwind.css -o assets/main.css
           '';
         });
       in
