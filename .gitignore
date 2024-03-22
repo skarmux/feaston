@@ -18,4 +18,8 @@ result-*/
 # Cargo root
 .cargo/
 
+# SQLite database (it's a file)
 sqlite.*
+
+# Generated Tailwind CSS file
+assets/main.css

@@ -1,0 +1,17 @@
+<input type="text" value="event/{{ event_id }}" id="event_id" hidden />
+<button onclick="myFunction()">Copy URL</button>
+
+<script>
+	function myFunction() {
+		var url = window.location.href;
+		// Get the text field
+		var copyText = document.getElementById("event_id");
+
+		// Select the text field
+		copyText.select();
+		copyText.setSelectionRange(0, 99999); // For mobile devices
+
+		// Copy the text inside the text field
+		navigator.clipboard.writeText(url + copyText.value);
+	}
+</script>

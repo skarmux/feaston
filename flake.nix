@@ -38,8 +38,8 @@
 
         rustToolchain = pkgs.pkgsBuildHost.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
         craneLib = (crane.mkLib pkgs).overrideToolchain rustToolchain;
-        # craneLib = crane.lib.${system};
 
+        # Filter sources that requre rebuilds on change
         src = lib.cleanSourceWith {
           src = craneLib.path ./.; # The original, unfiltered source
           filter = path: type:
@@ -92,6 +92,7 @@
             export DATABASE_URL=sqlite:./sqlite.db
             sqlx database create
             sqlx migrate run
+            tailwindcss -i styles/tailwind.css -o assets/main.css
           '';
         });
       in

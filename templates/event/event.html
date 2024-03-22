@@ -1,5 +1,6 @@
-{% import "components/input.html" as input %}
-{% import "components/button.html" as button %}
+{% extends "base.html" %}
+
+{% block content %}
 <div class="flex flex-col gap-10">
 	<header class="text-left">
 		<p class="text-sm font-medium text-ctp-latte-overlay-100 dark:text-ctp-mocha-overlay-100">EVENT</p>
@@ -7,17 +8,31 @@
 		<p class="text-xl">{{ date }}</p>
 	</header>
 
-	<div id="contribution_list" hx-get="/contributions" hx-vals='{ "event_id": "{{ event_id }}" }' hx-trigger="load">
-	</div>
-
-	<div class="p-8 w-full rounded-lg shadow-md bg-ctp-latte-mantle dark:bg-ctp-mocha-mantle">
-		<div class="mb-6 text-2xl font-bold">What should be your contribution?</div>
-		<form class="space-y-4" hx-post="/contributions" hx-swap="innerHTML" hx-target="#contribution_list"
-			hx-on:after-request="this.reset()">
-			<input hidden name="event_id" id="event_id" value="{{ event_id }}" />
-			{% call input::text(form_id="form_new_contribution", name="food", required=true) %}
-			{% call input::text(form_id="form_new_contribution", name="name", required=true) %}
-			{% call button::submit() %}
-		</form>
-	</div>
+	<ul id="contributions-list">
+		{% for contribution in contributions %}
+		<li
+			class="mb-4 w-full flex-grow flex bg-ctp-latte-mantle dark:bg-ctp-mocha-mantle py-4 px-8 rounded-lg shadow-md hover:bg-ctp-latte-surface-300 dark:hover:bg-ctp-mocha-surface-300">
+			<p class="flex-grow text-left text-xl font-semibold">{{ contribution.food_name }}</p>
+			<p class="font-semibold text-ctp-latte-overlay-100 dark:text-ctp-mocha-overlay-100">
+				{{ contribution.guest_name }}
+			</p>
+		</li>
+		{% endfor %}
+		<li id="new-contribution-form"
+			class="p-8 w-full rounded-lg shadow-md bg-ctp-latte-mantle dark:bg-ctp-mocha-mantle">
+			<div class="mb-6 text-2xl font-bold">Share your contribution</div>
+			<form class="space-y-4" hx-post="/contributions" hx-swap="outerHTML" hx-target="#new-contribution-form">
+				<input name="event_id" id="form_new_contribution[event_id]" value="{{ event_id }}" hidden />
+				<input type="text" id="form_new_contribution[food]" name="food"
+					class="font-semibold text-ctp-mocha-teal py-2 px-4 w-full text-sm rounded-lg border-2 shadow-inner focus:outline-none hover:bg-ctp-latte-base border-ctp-latte-surface-200 caret-ctp-latte-teal hover:dark:bg-ctp-mocha-base dark:bg-ctp-mocha-mantle dark:border-ctp-mocha-surface-200 dark:focus:border-ctp-mocha-teal dark:caret-ctp-mocha-teal focus:border-ctp-latte-teal"
+					placeholder="CONTRIBUTION" required />
+				<input type="text" id="form_new_contribution[name]" name="name"
+					class="font-semibold text-ctp-mocha-teal py-2 px-4 w-full text-sm rounded-lg border-2 shadow-inner focus:outline-none hover:bg-ctp-latte-base border-ctp-latte-surface-200 caret-ctp-latte-teal hover:dark:bg-ctp-mocha-base dark:bg-ctp-mocha-mantle dark:border-ctp-mocha-surface-200 dark:focus:border-ctp-mocha-teal dark:caret-ctp-mocha-teal focus:border-ctp-latte-teal"
+					placeholder="YOUR NAME" required />
+				<button type="submit"
+					class="py-2 px-6 w-full text-sm font-semibold text-center rounded-lg border-2 hover:border-2 hover:shadow-md text-ctp-latte-base bg-ctp-latte-teal border-ctp-latte-teal dark:text-ctp-mocha-base dark:bg-ctp-mocha-teal dark:border-ctp-mocha-teal dark:hover:text-ctp-mocha-teal dark:hover:bg-ctp-mocha-base dark:hover:shadow-ctp-mocha-teal/20 hover:text-ctp-latte-text hover:bg-ctp-latte-base hover:shadow-ctp-latte-teal/20">SUBMIT</button>
+			</form>
+		</li>
+	</ul>
 </div>
+{% endblock %}
