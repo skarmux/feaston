@@ -85,13 +85,13 @@
           inherit cargoArtifacts;
 
           nativeBuildInputs = (commonArgs.nativeBuildInputs or []) ++ [
-            pkgs.sqlx-cli
+            # pkgs.sqlx-cli
           ];
 
-          preBuild = ''
-            export DATABASE_URL=sqlite:./sqlite.db
-            sqlx database create
-            sqlx migrate run
+          postInstall = ''
+            cp -r templates $out/
+            cp -r assets $out/
+            cp -r migrations $out/
           '';
         });
       in
