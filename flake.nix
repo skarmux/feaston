@@ -85,16 +85,19 @@
           ];
 
           preBuild = ''
+            cp -r templates $out/
+            cp -r assets $out/
+            cp -r migrations $out/
             export DATABASE_URL=sqlite:./db.sqlite3
             sqlx database create
             sqlx migrate run
           '';
 
-          postInstall = ''
-            cp -r templates $out/
-            cp -r assets $out/
-            cp -r migrations $out/
-          '';
+          # postInstall = ''
+          #   cp -r templates $out/
+          #   cp -r assets $out/
+          #   cp -r migrations $out/
+          # '';
         });
       in
       {
