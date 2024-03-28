@@ -46,15 +46,11 @@
             (lib.hasSuffix "\.html" path) ||
             (lib.hasSuffix "\.sql" path) ||
             (lib.hasSuffix "\.css" path) ||
-            (lib.hasSuffix "/assets/" path) ||
-            (lib.hasSuffix "/templates/" path) ||
+            (lib.hasSuffix "\.ico" path) ||
             # Default filter from crane (allow .rs files)
             (craneLib.filterCargoSources path type)
           ;
         };
-
-        # buildInputs = with pkgs; [ ]; # compile time & runtime (ex: openssl, sqlite)
-        # nativeBuildInputs = with pkgs; [ rustToolchain pkg-config ]; # compile time
 
         # Common arguments can be set here to avoid repeating them later
         commonArgs = {
@@ -85,8 +81,14 @@
           inherit cargoArtifacts;
 
           nativeBuildInputs = (commonArgs.nativeBuildInputs or []) ++ [
-            # pkgs.sqlx-cli
+            pkgs.sqlx-cli
           ];
+
+          preBuild = ''
+            export DATABASE_URL=sqlite:./db.sqlite3
+            sqlx database create
+            sqlx migrate run
+          '';
 
           postInstall = ''
             cp -r templates $out/
@@ -115,9 +117,6 @@
           
           # Extra inputs can be added here; cargo and rustc are provided by default.
           packages = with pkgs; [
-            # terraform
-            # google-cloud-sdk
-            # nixops_unstable
             sqlx-cli
             rustywind # CLI for organizing Tailwind CSS classes
             tailwindcss
