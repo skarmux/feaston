@@ -1,9 +1,11 @@
 use anyhow::Context;
 use clap::Parser;
-use sqlx::SqlitePool;
+use sqlx::{SqlitePool, migrate::Migrator};
 
 use feaston::config::Config;
 use feaston::http;
+
+static MIGRATOR: Migrator = sqlx::migrate!("./migrations");
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -17,7 +19,10 @@ async fn main() -> anyhow::Result<()> {
         .await
         .context("could not connect to database")?;
 
-    sqlx::migrate!().run(&db).await?;
+    MIGRATOR
+        .run(&mut conn)
+        .await
+        .expect("failed to run migrations");
 
     http::serve(/*config,*/ db).await?;
 
