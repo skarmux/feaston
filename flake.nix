@@ -59,10 +59,10 @@
           , stdenv
           }:
           craneLib.buildPackage {
-            src = craneLib.cleanCargoSource (craneLib.path ./.);
-            # src = craneLib.path ./.;
+            # src = craneLib.cleanCargoSource (craneLib.path ./.);
+            src = craneLib.path ./.;
             # inherit src;
-            strictDeps = true;
+            # strictDeps = true;
 
             # Build-time tools which are target agnostic. build = host = target = your-machine.
             # Emulators should essentially also go `nativeBuildInputs`. But with some packaging issue,
@@ -70,7 +70,7 @@
             # We put them here just for a workaround.
             # See: https://github.com/NixOS/nixpkgs/pull/146583
             depsBuildBuild = [
-              qemu
+              # qemu
             ];
 
             # Dependencies which need to be build for the current platform
@@ -95,7 +95,14 @@
             preBuild = ''
               export DATABASE_URL=sqlite:./db.sqlite3
               sqlx database create
+              mkdir -p migrations
               sqlx migrate run
+            '';
+            
+            postInstall = ''
+              cp -r templates $out/
+              cp -r assets $out/
+              cp -r migrations $out/
             '';
 
             # Tell cargo about the linker and an optional emulater. So they can be used in `cargo build`
@@ -104,7 +111,7 @@
             # They are also be set in `.cargo/config.toml` instead.
             # See: https://doc.rust-lang.org/cargo/reference/config.html#target
             CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER = "${stdenv.cc.targetPrefix}cc";
-            CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUNNER = "qemu-aarch64";
+            # CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUNNER = "qemu-aarch64";
 
             # Tell cargo which target we want to build (so it doesn't default to the build system).
             # We can either set a cargo flag explicitly with a flag or with an environment variable.
@@ -125,6 +132,7 @@
         checks = {
           inherit feaston;
         };
+        # checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
 
         packages.default = feaston;
 
@@ -147,6 +155,7 @@
         #     nodePackages.vscode-langservers-extracted
         #   ];
         # };
+        
         apps.default = flake-utils.lib.mkApp {
           drv = pkgs.writeScriptBin "my-app" ''
             ${pkgs.pkgsBuildBuild.qemu}/bin/qemu-aarch64 ${feaston}/bin/cross-rust-overlay
