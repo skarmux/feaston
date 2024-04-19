@@ -1,13 +1,13 @@
-{ config, lib, pkgs, ... }:
+flake: { config, lib, pkgs, ... }:
 {
   options.services.feaston = {
-    enable = mkEnableOption ''
+    enable = lib.mkEnableOption ''
       Feaston event contribution planner     
     '';
 
-    package = mkOption {
-      type = types.package;
-      default = feaston;
+    package = lib.mkOption {
+      type = lib.types.package;
+      default = flake.packages.${pkgs.stdenv.hostPlatform.system}.feaston;
       description = ''
         The package to use with the service.
       '';
