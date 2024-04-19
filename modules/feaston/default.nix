@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+flake: { config, lib, pkgs, ... }:
 let
   cfg = config.services.feaston;
 in
@@ -10,7 +10,7 @@ in
 
     package = lib.mkOption {
       type = lib.types.package;
-      default = self.packages.${pkgs.system}.default;
+      default = flake.packages.${pkgs.system}.default;
       description = ''
         The package to use with the service.
       '';
