@@ -12,14 +12,17 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.rust-analyzer-src.follows = "";
     };
-    # flake-utils.url = "github:numtide/flake-utils";
     flake-parts.url = "github:hercules-ci/flake-parts";
   };
 
-  outputs = inputs@ { self, nixpkgs, crane, fenix, flake-parts, ... }: flake-parts.lib.mkFlake { inherit inputs; } {
+  outputs = inputs@{ self, nixpkgs, crane, fenix, flake-parts, ... }: flake-parts.lib.mkFlake { inherit inputs; } {
     systems = [ "x86_64-linux" "aarch64-linux" ];
     flake = {
-      nixosModules.default = { pkgs, config, lib, ... }: {
+      nixosModules.default = { pkgs, config, lib, ... }:
+      let
+        cfg = config.services.feaston;
+      in {
+
         options.services.feaston = {
           enable = lib.mkEnableOption ''
             Feaston event contribution planner     
@@ -32,7 +35,9 @@
             '';
           };
         }; # options.services.feaston
-        config = lib.mkIf config.service.feaston.enable {
+
+        config = lib.mkIf cfg.enable {
+
           users.users.feaston = {
             description = "Feaston daemon user";
             isSystemUser = true;
@@ -45,7 +50,9 @@
             # this user.
             linger = true;
           };
+
           users.groups."feaston" = {};
+
           systemd.services.feaston = {
             description = "Feaston event contribution planner";
             after = [ "network-online.target" ];
@@ -63,6 +70,7 @@
         }; # config
       }; # nixosModules.default
     }; # flake
+
     perSystem = { pkgs, config, system, ... }:
     let
       toolchain = fenix.packages.${system}.fromToolchainFile {
@@ -117,33 +125,34 @@
         '';
       });
     in {
+
       packages = {
         default = feaston;
       };
-      # devShells.default = craneLib.devShell {
-      #   # Additional dev-shell environment variables can be set directly
-      #   DATABASE_URL="sqlite:./sqlite.db";
+
+      devShells.default = craneLib.devShell {
         
-      #   # Extra inputs can be added here; cargo and rustc are provided by default.
-      #   packages = with pkgs; [
-      #     sqlx-cli
-      #     rustywind # CLI for organizing Tailwind CSS classes
-      #     tailwindcss
-      #     bacon
-      #     cargo-watch
-      #     systemfd
-      #     just
-      #     rust-analyzer
-      #     rustfmt
-      #     tailwindcss-language-server
-      #     nodePackages.vscode-langservers-extracted
-      #   ];
-      # };
+        DATABASE_URL="sqlite:./sqlite.db";
+        
+        packages = with pkgs; [
+          sqlx-cli
+          rustywind # CLI for organizing Tailwind CSS classes
+          tailwindcss
+          bacon
+          cargo-watch
+          systemfd
+          just
+          rust-analyzer
+          rustfmt
+          tailwindcss-language-server
+          nodePackages.vscode-langservers-extracted
+        ];
+      };
 
       checks = {
         inherit feaston;
       };
-      # checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
-    };
+
+    }; # perSystem
   }; # outputs
 }
