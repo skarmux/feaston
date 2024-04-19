@@ -12,144 +12,138 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.rust-analyzer-src.follows = "";
     };
-    flake-utils.url = "github:numtide/flake-utils";
+    # flake-utils.url = "github:numtide/flake-utils";
+    flake-parts.url = "github:hercules-ci/flake-parts";
   };
 
-  outputs = { self, nixpkgs, crane, fenix, flake-utils, ... }:
-    flake-utils.lib.eachDefaultSystem (system:
-      let
-        pkgs = nixpkgs.legacyPackages.${system};
-
-        toolchain = fenix.packages.${system}.fromToolchainFile {
-          file = ./rust-toolchain.toml;
-          sha256 = "qrWV5EuMDQSE6iiydNzO8Q09kH3SxryMLwLlzps3LY4=";
-        };
-
-        craneLib = (crane.mkLib pkgs).overrideToolchain toolchain;
-
-        sqlFilter = path: _type: null != builtins.match ".*sql$" path;
-        sqlOrCargo = path: type: (sqlFilter path type) || (craneLib.filterCargoSources path type);
-
-        src = pkgs.lib.cleanSourceWith {
-          src = craneLib.path ./.; # The original, unfiltered source
-          filter = sqlOrCargo;
-        };
-
-        commonArgs = {
-          # inherit src;
-          src = ./.;
-          strictDeps = true;
-
-          nativeBuildInputs = [
-            pkgs.pkg-config
-          ];
-
-          buildInputs = [
-            pkgs.openssl
-          ];
-        };
-
-        cargoArtifacts = craneLib.buildDepsOnly commonArgs;
-
-        feaston = craneLib.buildPackage (commonArgs // {
-          inherit cargoArtifacts;
-
-          nativeBuildInputs = (commonArgs.nativeBuildInputs or [ ]) ++ [
-            pkgs.sqlx-cli
-          ];
-
-          preBuild = ''
-            export DATABASE_URL=sqlite:./db.sqlite3
-            sqlx database create
-            mkdir -p migrations
-            sqlx migrate run
+  outputs = inputs@ { self, nixpkgs, crane, fenix, flake-parts, ... }: flake-parts.lib.mkFlake { inherit inputs; } {
+    systems = [ "x86_64-linux" "aarch64-linux" ];
+    flake = {
+      nixosModules.default = { pkgs, config, lib, ... }: {
+        options.services.feaston = {
+          enable = lib.mkEnableOption ''
+            Feaston event contribution planner     
           '';
-          
-          postInstall = ''
-            cp -r templates $out/
-            cp -r assets $out/
-            cp -r migrations $out/
-          '';
-        });
-      in
-      {
-        packages = {
-          default = feaston;
-        };
-
-        nixosModules.default = { pkgs, config, lib, ... }: {
-          options.services.feaston = {
-            enable = lib.mkEnableOption ''
-              Feaston event contribution planner     
+          package = lib.mkOption {
+            type = lib.types.package;
+            default = self.packages.${pkgs.system}.default;
+            description = ''
+              The package to use with the service.
             '';
+          };
+        }; # options.services.feaston
+        config = lib.mkIf config.service.feaston.enable {
+          users.users.feaston = {
+            description = "Feaston daemon user";
+            isSystemUser = true;
+            password = "";
+            group = "feaston";
 
-            package = lib.mkOption {
-              type = lib.types.package;
-              default = self.packages.${pkgs.system}.default;
-              description = ''
-                The package to use with the service.
-              '';
+            # Whether to enable lingering for this user. If true, systemd user units
+            # will start at boot, rather than starting at login and stopping at logout.
+            # This is the declarative equivalent of running loginctl enable-linger for 
+            # this user.
+            linger = true;
+          };
+          users.groups."feaston" = {};
+          systemd.services.feaston = {
+            description = "Feaston event contribution planner";
+            after = [ "network-online.target" ];
+            wants = [ "network-online.target" ];
+            wantedBy = [ "multi-user.target" ];
+            serviceConfig = {
+              User = "feaston";
+              Group = "feaston";
+              Restart = "always";
+              ExecStart = "${config.services.feaston.package}/bin/feaston";
+              StateDirectory = "feaston";
+              StateDirectoryMode = "0750";        
             };
-          }; # options.services.feaston
-          config = lib.mkIf config.service.feaston.enable {
-            users.users.feaston = {
-              description = "Feaston daemon user";
-              isSystemUser = true;
-              password = "";
-              group = "feaston";
+          }; # systemd.services.feaston
+        }; # config
+      }; # nixosModules.default
+    }; # flake
+    perSystem = { pkgs, config, system, ... }:
+    let
+      toolchain = fenix.packages.${system}.fromToolchainFile {
+        file = ./rust-toolchain.toml;
+        sha256 = "qrWV5EuMDQSE6iiydNzO8Q09kH3SxryMLwLlzps3LY4=";
+      };
 
-              # Whether to enable lingering for this user. If true, systemd user units
-              # will start at boot, rather than starting at login and stopping at logout.
-              # This is the declarative equivalent of running loginctl enable-linger for 
-              # this user.
-              linger = true;
-            };
+      craneLib = (crane.mkLib pkgs).overrideToolchain toolchain;
 
-            users.groups."feaston" = {};
+      sqlFilter = path: _type: null != builtins.match ".*sql$" path;
+      sqlOrCargo = path: type: (sqlFilter path type) || (craneLib.filterCargoSources path type);
 
-            systemd.services.feaston = {
-              description = "Feaston event contribution planner";
+      src = pkgs.lib.cleanSourceWith {
+        src = craneLib.path ./.; # The original, unfiltered source
+        filter = sqlOrCargo;
+      };
 
-              after = [ "network-online.target" ];
-              wants = [ "network-online.target" ];
-              wantedBy = [ "multi-user.target" ];
+      commonArgs = {
+        # inherit src;
+        src = ./.;
+        strictDeps = true;
 
-              serviceConfig = {
-                User = "feaston";
-                Group = "feaston";
-                Restart = "always";
-                ExecStart = "${config.services.feaston.package}/bin/feaston";
-                StateDirectory = "feaston";
-                StateDirectoryMode = "0750";        
-              };
-            }; # systemd.services.feaston
-          }; # config
-        };
+        nativeBuildInputs = [
+          pkgs.pkg-config
+        ];
 
-        # devShells.default = craneLib.devShell {
-        #   # Additional dev-shell environment variables can be set directly
-        #   DATABASE_URL="sqlite:./sqlite.db";
-          
-        #   # Extra inputs can be added here; cargo and rustc are provided by default.
-        #   packages = with pkgs; [
-        #     sqlx-cli
-        #     rustywind # CLI for organizing Tailwind CSS classes
-        #     tailwindcss
-        #     bacon
-        #     cargo-watch
-        #     systemfd
-        #     just
-        #     rust-analyzer
-        #     rustfmt
-        #     tailwindcss-language-server
-        #     nodePackages.vscode-langservers-extracted
-        #   ];
-        # };
+        buildInputs = [
+          pkgs.openssl
+        ];
+      };
 
-        checks = {
-          inherit feaston;
-        };
-        # checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
-      }
-    );
+      cargoArtifacts = craneLib.buildDepsOnly commonArgs;
+
+      feaston = craneLib.buildPackage (commonArgs // {
+        inherit cargoArtifacts;
+
+        nativeBuildInputs = (commonArgs.nativeBuildInputs or [ ]) ++ [
+          pkgs.sqlx-cli
+        ];
+
+        preBuild = ''
+          export DATABASE_URL=sqlite:./db.sqlite3
+          sqlx database create
+          mkdir -p migrations
+          sqlx migrate run
+        '';
+        
+        postInstall = ''
+          cp -r templates $out/
+          cp -r assets $out/
+          cp -r migrations $out/
+        '';
+      });
+    in {
+      packages = {
+        default = feaston;
+      };
+      # devShells.default = craneLib.devShell {
+      #   # Additional dev-shell environment variables can be set directly
+      #   DATABASE_URL="sqlite:./sqlite.db";
+        
+      #   # Extra inputs can be added here; cargo and rustc are provided by default.
+      #   packages = with pkgs; [
+      #     sqlx-cli
+      #     rustywind # CLI for organizing Tailwind CSS classes
+      #     tailwindcss
+      #     bacon
+      #     cargo-watch
+      #     systemfd
+      #     just
+      #     rust-analyzer
+      #     rustfmt
+      #     tailwindcss-language-server
+      #     nodePackages.vscode-langservers-extracted
+      #   ];
+      # };
+
+      checks = {
+        inherit feaston;
+      };
+      # checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
+    };
+  }; # outputs
 }
