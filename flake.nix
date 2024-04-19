@@ -130,6 +130,10 @@
         feaston = pkgs.callPackage crateExpression { };
       in
       {
+        packages = {
+          "aarch64-linux".default = feaston;
+        };
+
         nixosModules.default = { pkgs, config, lib, ... }: {
           options.services.feaston = {
             enable = lib.mkEnableOption ''
@@ -179,15 +183,6 @@
           }; # config
         };
 
-        checks = {
-          inherit feaston;
-        };
-        # checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
-
-        packages = {
-          "aarch64-linux".default = feaston;
-        };
-
         # devShells.default = craneLib.devShell {
         #   # Additional dev-shell environment variables can be set directly
         #   DATABASE_URL="sqlite:./sqlite.db";
@@ -207,6 +202,11 @@
         #     nodePackages.vscode-langservers-extracted
         #   ];
         # };
+
+        checks = {
+          inherit feaston;
+        };
+        # checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
       }
     );
 }
