@@ -138,7 +138,7 @@
         # checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
 
         packages = {
-          default = feaston;
+          aarch64-linux.default = feaston;
         };
 
         # devShells.default = craneLib.devShell {
