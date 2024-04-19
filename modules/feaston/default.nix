@@ -1,11 +1,11 @@
 { config, lib, pkgs, ... }:
 {
   options.services.feaston = {
-    enable = mkEnableOption ''
+    enable = lib.mkEnableOption ''
       Feaston event contribution planner     
     '';
 
-    package = mkOption {
+    package = lib.mkOption {
       type = types.package;
       default = feaston;
       description = ''
