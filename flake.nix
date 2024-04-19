@@ -58,8 +58,6 @@
             pkgs.sqlx-cli
           ];
 
-          # DATABASE_URL = "sqlite:./db.sqlite3";
-
           preBuild = ''
             export DATABASE_URL=sqlite:./db.sqlite3
             sqlx database create
@@ -77,7 +75,7 @@
       {
         packages = {
           inherit feaston;
-          default = feaston;
+          ${system}.default = feaston;
         };
 
         nixosModules.default = { pkgs, config, lib, ... }: {
@@ -88,7 +86,7 @@
 
             package = lib.mkOption {
               type = lib.types.package;
-              default = self.packages.default;
+              default = self.packages.${pkgs.system}.default;
               description = ''
                 The package to use with the service.
               '';
