@@ -1,4 +1,7 @@
-{ self, config, lib, pkgs, ... }:
+{ config, lib, pkgs, ... }:
+let
+  cfg = config.services.feaston;
+in
 {
   options.services.feaston = {
     enable = lib.mkEnableOption ''
@@ -7,14 +10,14 @@
 
     package = lib.mkOption {
       type = lib.types.package;
-      default = self.packages.${pkgs.stdenv.hostPlatform.system}.feaston;
+      default = self.packages.${pkgs.system}.default;
       description = ''
         The package to use with the service.
       '';
     };
   };
 
-  config = {
+  config = lib.mkIf cfg.enable {
     users.users.feaston = {
       description = "Feaston daemon user";
       isSystemUser = true;

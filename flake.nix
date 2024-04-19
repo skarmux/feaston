@@ -130,7 +130,7 @@
         feaston = pkgs.callPackage crateExpression { };
       in
       {
-        nixosModules.feaston = import ./modules/feaston self;
+        nixosModules.default = import ./modules/feaston self;
 
         checks = {
           inherit feaston;
