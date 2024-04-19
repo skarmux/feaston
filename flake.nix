@@ -88,7 +88,7 @@
 
             package = lib.mkOption {
               type = lib.types.package;
-              default = self.packages.${pkgs.system}.default;
+              default = self.packages.default;
               description = ''
                 The package to use with the service.
               '';
