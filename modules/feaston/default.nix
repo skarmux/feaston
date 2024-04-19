@@ -6,7 +6,7 @@
     '';
 
     package = lib.mkOption {
-      type = types.package;
+      type = lib.types.package;
       default = feaston;
       description = ''
         The package to use with the service.
