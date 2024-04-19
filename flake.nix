@@ -16,7 +16,7 @@
   };
 
   outputs = { self, nixpkgs, crane, fenix, flake-utils, ... }:
-    flake-utils.lib.eachSystem [ "x86_64-linux" "aarch64-linux" ] (system:
+    flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
 
@@ -74,8 +74,7 @@
       in
       {
         packages = {
-          inherit feaston;
-          ${system}.default = feaston;
+          default = feaston;
         };
 
         nixosModules.default = { pkgs, config, lib, ... }: {
@@ -86,7 +85,7 @@
 
             package = lib.mkOption {
               type = lib.types.package;
-              default = self.packages.${pkgs.system}.default;
+              default = self.packages.default;
               description = ''
                 The package to use with the service.
               '';
