@@ -16,7 +16,8 @@
       };
     };
   };
-  outputs = { nixpkgs, flake-utils, rust-overlay, crane, ... }:
+
+  outputs = { self, nixpkgs, flake-utils, rust-overlay, crane, ... }:
     flake-utils.lib.eachDefaultSystem (localSystem:
       let
         crossSystem = "aarch64-linux";
@@ -129,12 +130,16 @@
         feaston = pkgs.callPackage crateExpression { };
       in
       {
+        nixosModules.feaston = import ./modules/feaston self;
+
         checks = {
           inherit feaston;
         };
         # checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
 
-        packages.default = feaston;
+        packages = {
+          default = feaston;
+        };
 
         # devShells.default = craneLib.devShell {
         #   # Additional dev-shell environment variables can be set directly
@@ -155,12 +160,6 @@
         #     nodePackages.vscode-langservers-extracted
         #   ];
         # };
-        
-        apps.default = flake-utils.lib.mkApp {
-          drv = pkgs.writeScriptBin "my-app" ''
-            ${pkgs.pkgsBuildBuild.qemu}/bin/qemu-aarch64 ${feaston}/bin/cross-rust-overlay
-          '';
-        };
       }
     );
 }
