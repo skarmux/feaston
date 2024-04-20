@@ -21,34 +21,23 @@
 
     flake = {
       nixosModules.default = { pkgs, config, lib, ... }:
-      let
-        cfg = config.services.feaston;
-      in {
-        options.services.feaston = {
-          enable = lib.mkEnableOption ''
-            Feaston event contribution planner     
-          '';
-        }; # options.services.feaston
+      {
+        users.users.feaston = {
+          description = "Feaston daemon user";
+          isSystemUser = true;
+          password = "";
+          group = "feaston";
 
-        config = lib.mkIf cfg.enable {
-
-          users.users.feaston = {
-            description = "Feaston daemon user";
-            isSystemUser = true;
-            password = "";
-            group = "feaston";
-
-            # Whether to enable lingering for this user. If true, systemd user units
-            # will start at boot, rather than starting at login and stopping at logout.
-            # This is the declarative equivalent of running loginctl enable-linger for 
-            # this user.
-            linger = true;
-          };
-
-          users.groups."feaston" = {};
+          # Whether to enable lingering for this user. If true, systemd user units
+          # will start at boot, rather than starting at login and stopping at logout.
+          # This is the declarative equivalent of running loginctl enable-linger for 
+          # this user.
+          linger = true;
         };
+
+        users.groups."feaston" = {};
       };
-    };
+    }; # flake
 
     perSystem = { pkgs, config, system, ... }:
     let
