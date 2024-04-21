@@ -19,25 +19,7 @@
   flake-parts.lib.mkFlake { inherit inputs; } {
     systems = [ "x86_64-linux" "aarch64-linux" ];
 
-    flake = {
-      nixosModules.default = { pkgs, config, lib, ... }:
-      {
-        users.users.feaston = {
-          description = "Feaston daemon user";
-          isSystemUser = true;
-          password = "";
-          group = "feaston";
-
-          # Whether to enable lingering for this user. If true, systemd user units
-          # will start at boot, rather than starting at login and stopping at logout.
-          # This is the declarative equivalent of running loginctl enable-linger for 
-          # this user.
-          linger = true;
-        };
-
-        users.groups."feaston" = {};
-      };
-    }; # flake
+    flake = {};
 
     perSystem = { pkgs, config, system, ... }:
     let
@@ -94,32 +76,7 @@
       });
     in {
 
-      packages.default =
-        let
-          generateSystemd = type: name: config:
-            (nixpkgs.lib.nixosSystem {
-              inherit system;
-              modules = [{ systemd."${type}s".${name} = config; }];
-            }).config.systemd.units."${name}.${type}".text;
-
-          mkService = generateSystemd "service";
-
-          service = pkgs.writeTextFile {
-            name = "feaston.service";
-            text = mkService "feaston" {
-              unitConfig.WantedBy = [ "multi-user.target" ];
-              path = [ feaston ];
-              script = "feaston";
-            };
-          };
-        in 
-        pkgs.writeShellScriptBin "activate" ''
-          mkdir -p $HOME/.config/systemd/user
-          rm $HOME/.config/systemd/user/feaston.service
-          ln -s ${service} $HOME/.config/systemd/user/feaston.service
-          systemctl --user daemon-reload
-          systemctl --user restart feaston
-        '';
+      packages.default = feaston;
 
       devShells.default = craneLib.devShell {
         
