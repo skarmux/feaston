@@ -15,28 +15,28 @@
     flake-parts.url = "github:hercules-ci/flake-parts";
   };
 
-  outputs = inputs@{ self, nixpkgs, crane, fenix, flake-parts, ... }:
+  outputs = inputs@{ crane, fenix, flake-parts, ... }:
   flake-parts.lib.mkFlake { inherit inputs; } {
     systems = [ "x86_64-linux" "aarch64-linux" ];
 
     flake = {};
 
-    perSystem = { pkgs, config, system, ... }:
+    perSystem = { pkgs, system, ... }:
     let
       toolchain = fenix.packages.${system}.fromToolchainFile {
         file = ./rust-toolchain.toml;
-        sha256 = "qrWV5EuMDQSE6iiydNzO8Q09kH3SxryMLwLlzps3LY4=";
+        sha256 = "sha256-WzO5hWsH0tF9O3VDgmURQr/tkSo4DjmVJ4INlB/MGL4=";
       };
 
       craneLib = (crane.mkLib pkgs).overrideToolchain toolchain;
 
-      sqlFilter = path: _type: null != builtins.match ".*sql$" path;
-      sqlOrCargo = path: type: (sqlFilter path type) || (craneLib.filterCargoSources path type);
+      # sqlFilter = path: _type: null != builtins.match ".*sql$" path;
+      # sqlOrCargo = path: type: (sqlFilter path type) || (craneLib.filterCargoSources path type);
 
-      src = pkgs.lib.cleanSourceWith {
-        src = craneLib.path ./.; # The original, unfiltered source
-        filter = sqlOrCargo;
-      };
+      # src = pkgs.lib.cleanSourceWith {
+      #   src = craneLib.path ./.; # The original, unfiltered source
+      #   filter = sqlOrCargo;
+      # };
 
       commonArgs = {
         # inherit src;
