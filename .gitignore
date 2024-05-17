@@ -2,6 +2,8 @@
 debug/
 target/
 
+assets/main.css
+
 # Used for environment variables
 .env
 
@@ -19,4 +21,4 @@ result-*/
 .cargo/
 
 # SQLite database (it's a file)
-sqlite.*
+db.sqlite

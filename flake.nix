@@ -15,7 +15,7 @@
     flake-parts.url = "github:hercules-ci/flake-parts";
   };
 
-  outputs = inputs@{ crane, fenix, flake-parts, ... }:
+  outputs = inputs @ { crane, fenix, flake-parts, ... }:
   flake-parts.lib.mkFlake { inherit inputs; } {
     systems = [ "x86_64-linux" "aarch64-linux" ];
 
@@ -62,7 +62,7 @@
         ];
 
         preBuild = ''
-          export DATABASE_URL=sqlite:./db.sqlite3
+          export DATABASE_URL=sqlite:./db.sqlite?mode=rwc
           sqlx database create
           mkdir -p migrations
           sqlx migrate run
@@ -80,20 +80,20 @@
 
       devShells.default = craneLib.devShell {
         
-        DATABASE_URL="sqlite:./sqlite.db";
+        DATABASE_URL="sqlite:./db.sqlite?mode=rwc";
         
         packages = with pkgs; [
           sqlx-cli
-          rustywind # CLI for organizing Tailwind CSS classes
           tailwindcss
           bacon
           cargo-watch
-          systemfd
-          just
-          rust-analyzer
+          mprocs
+          gitui
+          
+          # Formatter
           rustfmt
-          tailwindcss-language-server
-          nodePackages.vscode-langservers-extracted
+          rustywind # CLI for organizing Tailwind CSS classes
+          nodePackages.prettier
         ];
       };
 
