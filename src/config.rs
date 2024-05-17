@@ -8,6 +8,6 @@ pub struct Config {
     #[arg(long, env)]
     pub database_url: String,
     /// The connection port.
-    #[arg(long, env, default_value_t = 8080)]
+    #[arg(long, env, default_value_t = 5000)]
     pub port: u16,
 }

@@ -19,7 +19,7 @@ async fn main() -> anyhow::Result<()> {
 
     sqlx::migrate!().run(&db).await?;
 
-    http::serve(/*config,*/ db).await?;
+    http::serve(db).await?;
 
     Ok(())
 }
