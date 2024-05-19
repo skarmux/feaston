@@ -11,6 +11,10 @@ module.exports = {
   ],
   theme: {
     extend: {
+      backgroundImage: {
+        'cat-waves-latte': "url('/assets/cat-waves-latte.svg')",
+        'cat-waves-mocha': "url('/assets/cat-waves-mocha.svg')",
+      },
       colors: {
         'primary': '#94e2d5',
         'secondary': '#89b4fa',
