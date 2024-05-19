@@ -6,9 +6,8 @@ use axum::{
     Form,
     routing::{get,post},
     extract::Path,
-    response::IntoResponse, http::Uri
+    response::IntoResponse 
 };
-use axum_htmx::{HxBoosted, HxRedirect};
 use sqlx::FromRow;
 use time::{Date, format_description};
 use uuid::Uuid;
