@@ -1,6 +1,4 @@
 procs:
-  nvim:
-    cmd: ["nvim"]
   server:
     shell: "cargo watch -x run"
   tailwind:
