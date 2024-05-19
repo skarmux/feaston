@@ -5,9 +5,12 @@
 	<div class="p-8 w-1/2 rounded-lg drop-shadow-xl backdrop-blur-md
 	bg-ctp-latte-mantle/75 dark:bg-ctp-mocha-mantle/75
         ">
-		<form class="space-y-4" id="event_form_new" hx-post="/events" hx-target="#form_event_new_container"
+		<form id="event_form_new" hx-post="/events" hx-target="#form_event_new_container"
 			hx-swap="outerHTML">
-			<input type="text" id="event_form_new[name]" name="name"
+			<!-- EVENT NAME -->
+			<div class="mb-4">
+				<label for="event_form_new[name]">Event</label>
+				<input type="text" id="event_form_new[name]" name="name"
 				class="font-semibold py-2 px-4 w-full text-sm rounded-lg border-2 shadow-inner focus:outline-none
                 text-ctp-latte-teal dark:text-ctp-mocha-teal
                 hover:bg-ctp-latte-base dark:hover:bg-ctp-mocha-base                  
@@ -16,8 +19,10 @@
                 border-ctp-latte-surface-200 dark:border-ctp-mocha-surface-200
                 focus:border-ctp-latte-teal dark:focus:border-ctp-mocha-teal"
 				placeholder="My personal event" required />
+			</div>
             <!-- CALENDAR -->
-			<div x-data="app()" x-init="[initDate(), setNoOfDaysAndBlanks()]" x-cloak>
+			<div x-data="app()" x-init="[initDate(), setNoOfDaysAndBlanks()]" x-cloak class="mb-6">
+				<label for="event_form_new[date]">Datum</label>
 				<input type="hidden" id="event_form_new[date]" name="date" x-ref="date" :value="datepickerValue" required />
                 <!-- < Month Year > -->
 				<div class="flex justify-between items-center mb-2">
