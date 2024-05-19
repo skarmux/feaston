@@ -2,8 +2,8 @@
 
 {% block content %}
 <div id="form_event_new_container" class="flex justify-center items-center mt-10">
-	<div class="p-8 w-1/2 rounded-lg shadow-md
-        bg-ctp-latte-mantle dark:bg-ctp-mocha-mantle
+	<div class="p-8 w-1/2 rounded-lg drop-shadow-xl backdrop-blur-md
+	bg-ctp-latte-mantle/75 dark:bg-ctp-mocha-mantle/75
         ">
 		<form class="space-y-4" id="event_form_new" hx-post="/events" hx-target="#form_event_new_container"
 			hx-swap="outerHTML">
@@ -54,19 +54,20 @@
 						</div>
 					</template>
 					<template x-for="blankday in blankdays">
-						<div class="p-1 cursor-pointer text-center text-sm text-ctp-latte-mantle dark:text-ctp-mocha-mantle rounded-lg leading-loose outline-2">0</div>
+						<div class="aspect-square p-1 cursor-pointer text-center text-sm text-ctp-latte-mantle dark:text-ctp-mocha-mantle rounded-lg leading-loose outline-2">&nbsp;</div>
 					</template>
 					<template x-for="(date, dateIndex) in no_of_days" :key="dateIndex">
 						<div @click="selectDate(date)" x-text="date"
-							class="p-1 cursor-pointer text-center text-sm rounded-lg leading-loose outline-2 hover:bg-ctp-latte-base dark:hover:bg-ctp-mocha-base"
+							class="aspect-square content-center p-1 cursor-pointer text-center text-sm rounded-lg leading-loose outline-2 hover:outline"
 							:class="{
 			                      'outline outline-ctp-latte-surface-200 dark:outline-ctp-mocha-surface-200': isToday(date) == true && isSelectedDate(date) == false, 
-			                      'outline outline-ctp-latte-teal dark:outline-ctp-mocha-teal text-ctp-latte-teal dark:text-ctp-mocha-teal font-semibold': isSelectedDate(date) == true 
+			                      'outline outline-ctp-latte-teal dark:outline-ctp-mocha-teal text-ctp-latte-teal dark:text-ctp-mocha-teal font-semibold': isSelectedDate(date) == true,
+								  'hover:outline-ctp-latte-text dark:hover:outline-ctp-mocha-text': isSelectedDate(date) == false,
 			                    }">
 						</div>
 					</template>
 					<template x-for="blankday in blankdaysAfter">
-						<div class="p-1 cursor-pointer text-center text-sm text-ctp-latte-mantle dark:text-ctp-mocha-mantle rounded-lg leading-loose outline-2">0</div>
+						<div class="aspect-square p-1 cursor-pointer text-center text-sm text-ctp-latte-mantle dark:text-ctp-mocha-mantle rounded-lg leading-loose outline-2">&nbsp;</div>
 					</template>
 				</div>
 			</div>
