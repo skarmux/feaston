@@ -13,7 +13,7 @@ pub fn router() -> Router {
 }
 
 #[derive(Template,serde::Serialize)]
-#[template(path = "contribution.html")]
+#[template(path = "event/contribution.html")]
 struct ContributionTemplate {
     food_name: String,
     guest_name: String,
