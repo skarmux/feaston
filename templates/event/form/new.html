@@ -92,7 +92,7 @@
 
                 hover:text-ctp-latte-text 
                 hover:bg-ctp-latte-base 
-                hover:shadow-ctp-latte-teal/20">Submit</button>
+                hover:shadow-ctp-latte-teal/20">Speichern</button>
 		</form>
 	</div>
 </div>
@@ -142,7 +142,7 @@
 				let daysInMonth = new Date(this.year, this.month + 1, 0).getDate();
 				this.no_of_days = daysInMonth;
 				let dayOfWeek = new Date(this.year, this.month).getDay();
-				this.blankdays = dayOfWeek;
+				this.blankdays = dayOfWeek - 1;
                 this.blankdaysAfter = 42 - daysInMonth - dayOfWeek;
 			},
 		};
