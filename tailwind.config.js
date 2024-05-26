@@ -11,9 +11,20 @@ module.exports = {
   ],
   theme: {
     extend: {
+      container: {
+        center: true,
+        padding: '2rem',
+        screens: {
+          DEFAULT: '100%',
+          sm: '100%',
+          md: '100%',
+          lg: '40rem',
+          xl: '40rem',
+        },
+      },
       backgroundImage: {
-        'cat-waves-latte': "url('/assets/cat-waves-latte.svg')",
-        'cat-waves-mocha': "url('/assets/cat-waves-mocha.svg')",
+        'cat-waves-latte': "url('/assets/cat-waves-latte.webp')",
+        'cat-waves-mocha': "url('/assets/cat-waves-mocha.webp')",
       },
       colors: {
         'primary': '#94e2d5',
