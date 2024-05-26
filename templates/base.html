@@ -3,55 +3,42 @@
 
 <head>
     <!-- Allow any inheriting page to set it's own title -->
-    <title>{% block title %}feaston{% endblock %}</title>
+    <title>{% block title %}{% endblock %}</title>
 
     <link href="/assets/favicon.ico" rel="icon" type="image/x-icon">
     <link href="/assets/main.css" rel="stylesheet" />
-    <!-- Inter font -->
-    <link href="https://rsms.me/inter/inter.css" rel="stylesheet" />
 
-    <!-- htmx from the unpkg CDN - your mileage may vary -->
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-    <!-- htmx alpine-morph extension -->
-    <script src="https://unpkg.com/htmx.org/dist/ext/alpine-morph.js"></script>
     <!-- Alpine Plugins -->
-    <script defer src="https://unpkg.com/@alpinejs/morph@3.x.x/dist/cdn.min.js"></script>
+    <!-- <script defer src="https://unpkg.com/@alpinejs/morph@3.x.x/dist/cdn.min.js"></script> -->
     <!-- Alpine Core -->
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.14.0/dist/cdn.min.js"></script>
 
     <!-- Allow any inheriting page to extend head with additional assets -->
     {% block head %}{% endblock %}
 </head>
 
 <body
-    class="flex flex-col min-h-screen
-    text-ctp-latte-text dark:text-ctp-mocha-text
-    bg-cover
-    bg-cat-waves-latte dark:bg-cat-waves-mocha
-    ">
-    <nav class="mb-10 p-4 sticky top-0 z-50
-        drop-shadow-xl backdrop-blur-md
-        bg-ctp-latte-mantle/75 dark:bg-ctp-mocha-mantle/75">
+    class="bg-fixed flex flex-col min-h-screen bg-cover text-ctp-latte-text bg-cat-waves-latte dark:text-ctp-mocha-text dark:bg-cat-waves-mocha"
+    style="font-family: ui-rounded, 'Hiragino Maru Gothic ProN', Quicksand, Comfortaa, Manjari, 'Arial Rounded MT', 'Arial Rounded MT Bold', Calibri, source-sans-pro, sans-serif;
+    font-weight: normal;">
+    <nav class="sticky top-0 z-50 p-4 mb-10 drop-shadow-xl backdrop-blur-md bg-ctp-latte-mantle/75 dark:bg-ctp-mocha-mantle/75">
         <div class="flex flex-col gap-2 mx-auto text-center">
-            <p>Feaston</p>
+            <p>{% block title %}{% endblock %}</p>
         </div>
     </nav>
 
-    <div class="container flex-grow p-4 mx-auto">
+    <div class="container flex-grow">
         {% block content %}
         {% endblock %}
     </div>
 
-    <footer class="mt-10 px-4 py-12 space-y-8 overflow-hidden
-        drop-shadow-xl backdrop-blur-md
-        bg-ctp-latte-mantle/75 dark:bg-ctp-mocha-mantle/75
-        ">
-        <nav class="flex flex-wrap justify-center -mx-5 -my-2">
-            <p class="px-5 py-2"><a href="/contact" class="hover:text-ctp-latte-teal dark:hover:text-ctp-mocha-teal">Contact</a></p>
-            <p class="px-5 py-2"><a href="/privacy" class="hover:text-ctp-latte-teal dark:hover:text-ctp-mocha-teal">Privacy</a></p>
+    <footer class="overflow-hidden py-12 px-4 mt-10 space-y-8 drop-shadow-xl backdrop-blur-md bg-ctp-latte-mantle/75 dark:bg-ctp-mocha-mantle/75">
+        <nav class="flex flex-wrap justify-center -my-2 -mx-5">
+            <p class="py-2 px-5"><a href="/contact" class="dark:hover:text-ctp-mocha-teal hover:text-ctp-latte-teal">Contact</a></p>
+            <p class="py-2 px-5"><a href="/privacy" class="dark:hover:text-ctp-mocha-teal hover:text-ctp-latte-teal">Privacy</a></p>
         </nav>
         <div class="flex justify-center mt-8 space-x-6">
-            <a href="https://www.instagram.com/skarmux" class="hover:text-ctp-latte-teal dark:hover:text-ctp-mocha-teal">
+            <a href="https://www.instagram.com/skarmux" class="dark:hover:text-ctp-mocha-teal hover:text-ctp-latte-teal">
                 <span class="sr-only">Instagram</span>
                 <svg class="w-6 h-6" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
                     <path fill-rule="evenodd"
@@ -59,7 +46,7 @@
                         clip-rule="evenodd"></path>
                 </svg>
             </a>
-            <a href="https://github.com/skarmux" class="hover:text-ctp-latte-teal dark:hover:text-ctp-mocha-teal">
+            <a href="https://github.com/skarmux" class="dark:hover:text-ctp-mocha-teal hover:text-ctp-latte-teal">
                 <span class="sr-only">GitHub</span>
                 <svg class="w-6 h-6" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
                     <path fill-rule="evenodd"
@@ -67,7 +54,7 @@
                         clip-rule="evenodd"></path>
                 </svg>
             </a>
-            <a href="https://www.linkedin.com/in/nils-harbke-2ba66725b" class="hover:text-ctp-latte-teal dark:hover:text-ctp-mocha-teal">
+            <a href="https://www.linkedin.com/in/nils-harbke-2ba66725b" class="dark:hover:text-ctp-mocha-teal hover:text-ctp-latte-teal">
                 <span class="sr-only">Linkedin</span>
                 <svg class="w-6 h-6" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
                     <path
