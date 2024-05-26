@@ -1,11 +1,9 @@
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-24.05";
     crane = {
       url = "github:ipetkov/crane";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-      };
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     fenix = {
       url = "github:nix-community/fenix";
@@ -85,10 +83,8 @@
         packages = with pkgs; [
           sqlx-cli
           tailwindcss
-          bacon
           cargo-watch
           mprocs
-          gitui
           
           # Formatter
           rustfmt
