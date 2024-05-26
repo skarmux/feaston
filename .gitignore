@@ -22,3 +22,5 @@ result-*/
 
 # SQLite database (it's a file)
 db.sqlite
+db.sqlite-shm
+db.sqlite-wal
