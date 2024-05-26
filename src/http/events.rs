@@ -1,20 +1,16 @@
 use anyhow::Context;
-use askama::Template;
 use axum::{
-    extract::Path, response::IntoResponse, routing::{get,post}, Extension, Json, Router 
+    extract::Path, routing::{get,post}, Extension, Json, Router 
 };
 use sqlx::FromRow;
 use time::OffsetDateTime;
 use uuid::Uuid;
 use serde::{Serialize,Deserialize};
 
-use crate::http::{contributions::ContributionFromQuery, types::HtmlTemplate, ApiContext, Result};
-
-use super::contributions::Contribution;
+use crate::http::{ApiContext, Result};
 
 pub fn router() -> Router {
     Router::new()
-        .route("/", get(index))
         .route("/event/:id", get(get_event))
         .route("/event/:id/contributions", post(create_contribution))
         .route("/event", post(create_event))
@@ -26,9 +22,32 @@ struct CreateEvent {
     date: String,
 }
 
-#[derive(Template)]
-#[template(path = "event.html")]
-struct EventTemp {}
+#[derive(serde::Deserialize, serde::Serialize)]
+pub struct Contribution {
+    pub id: i64,
+    pub event_id: Uuid,
+    pub name: String,
+    pub guest: String,
+}
+
+#[derive(Debug)]
+pub struct ContributionFromQuery {
+    pub contribution_id: i64,
+    pub event_id: Uuid,
+    pub name: String,
+    pub guest: String,
+}
+
+impl ContributionFromQuery {
+    pub fn into_contribution(self) -> Contribution {
+        Contribution {
+            id: self.contribution_id,
+            event_id: self.event_id,
+            name: self.name,
+            guest: self.guest,
+        }
+    }
+}
 
 #[derive(Serialize)]
 pub struct Event {
@@ -55,10 +74,6 @@ impl EventFromQuery {
             contributions: vec![],
         }
     }
-}
-
-async fn index( ) -> Result<impl IntoResponse> {
-    Ok(HtmlTemplate(EventTemp {}).into_response())
 }
 
 async fn get_event(

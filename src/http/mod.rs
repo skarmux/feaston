@@ -2,19 +2,13 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use clap::Parser;
 use crate::config::Config;
 use anyhow::Context;
-use askama::Template;
-use axum::{Router, response::IntoResponse, routing::get};
+use axum::Router;
 use sqlx::SqlitePool;
 
 /// Define common error type.
 mod error;
 
-/// General purpose common type definitions.
-mod types;
-pub use types::HtmlTemplate;
-
 /// Modules introducing API routes.
-mod contributions;
 mod events;
 
 pub use error::{Error, ResultExt};
@@ -41,7 +35,7 @@ pub async fn serve(/*config: Config,*/ db: SqlitePool) -> anyhow::Result<()> {
             }))
             .layer(TraceLayer::new_for_http())
     ).nest_service("/assets", ServeDir::new(format!("{}/assets", assets_path.to_str().unwrap())))
-    .nest_service("/favicon.ico", ServeDir::new(format!("{}/assets/favicon.ico", assets_path.to_str().unwrap())));
+    .nest_service("/", ServeDir::new(format!("{}/index.html", assets_path.to_str().unwrap())));
 
     let config = Config::parse();
 
@@ -59,24 +53,5 @@ pub async fn serve(/*config: Config,*/ db: SqlitePool) -> anyhow::Result<()> {
 fn api_router() -> Router {
     // This is the order that the modules were authored in.
     Router::new()
-        .route("/contact", get(contact))
-        .route("/privacy", get(privacy))
         .merge(events::router())
-        .merge(contributions::router())
-}
-
-#[derive(Template)]
-#[template(path = "contact.html")]
-struct Contact;
-
-async fn contact() -> Result<impl IntoResponse> {
-    Ok(HtmlTemplate(Contact {}))
-}
-
-#[derive(Template)]
-#[template(path = "privacy.html")]
-struct Privacy;
-
-async fn privacy() -> Result<impl IntoResponse> {
-    Ok(HtmlTemplate(Privacy {}))
 }
