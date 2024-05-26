@@ -1,17 +1,12 @@
 use anyhow::Context;
 use askama::Template;
 use axum::{
-    Extension,
-    Router,
-    Form,
-    routing::{get,post},
-    extract::Path,
-    response::IntoResponse 
+    extract::Path, response::IntoResponse, routing::{get,post}, Extension, Json, Router 
 };
 use sqlx::FromRow;
-use time::{Date, format_description};
+use time::OffsetDateTime;
 use uuid::Uuid;
-use serde::Deserialize;
+use serde::{Serialize,Deserialize};
 
 use crate::http::{contributions::ContributionFromQuery, types::HtmlTemplate, ApiContext, Result};
 
@@ -21,46 +16,34 @@ pub fn router() -> Router {
     Router::new()
         .route("/", get(index))
         .route("/event/:id", get(get_event))
-        .route("/events", post(create_event))
+        .route("/event/:id/contributions", post(create_contribution))
+        .route("/event", post(create_event))
 }
 
 #[derive(Deserialize, Debug)]
 struct CreateEvent {
     name: String,
-    date: Date,
-}
-
-#[derive(Template)]
-#[template(path = "event/event.html")]
-struct EventTemp {
-    // For linking new contributions
-    event_id: Uuid,
-    name: String,
     date: String,
-    contributions: Vec<Contribution>,
 }
 
 #[derive(Template)]
-#[template(path = "event/created.html")]
-struct EventCreatedTemp {
-    event_id: Uuid,
-}
+#[template(path = "event.html")]
+struct EventTemp {}
 
-#[derive(Template)]
-#[template(path = "event/form/new.html")]
-struct NewEventFormTemplate {}
-
+#[derive(Serialize)]
 pub struct Event {
     pub id: Uuid,
     pub name: String,
-    pub date: Date,
+    #[serde(with = "time::serde::rfc3339")]
+    pub date: OffsetDateTime,
+    pub contributions: Vec<Contribution>
 }
 
 #[derive(FromRow, Debug)]
 struct EventFromQuery {
     event_id: Uuid,
     name: String,
-    date: Date,
+    date: OffsetDateTime,
 }
 
 impl EventFromQuery {
@@ -69,19 +52,20 @@ impl EventFromQuery {
             id: self.event_id,
             name: self.name,
             date: self.date,
+            contributions: vec![],
         }
     }
 }
 
 async fn index( ) -> Result<impl IntoResponse> {
-    Ok(HtmlTemplate(NewEventFormTemplate {}).into_response())
+    Ok(HtmlTemplate(EventTemp {}).into_response())
 }
 
 async fn get_event(
     ctx: Extension<ApiContext>,
     Path(event_id): Path<Uuid>
-) -> Result<impl IntoResponse> {
-    let event: Event = sqlx::query_as!(
+) -> Result<Json<Event>> {
+    let mut event: Event = sqlx::query_as!(
         EventFromQuery,
         r#"select event_id as "event_id: uuid::Uuid", name, date from event where event_id = ?;"#,
         event_id
@@ -91,9 +75,9 @@ async fn get_event(
     .await
     .context("database error")?;
 
-    let contributions: Vec<Contribution> = sqlx::query_as!(
+    event.contributions = sqlx::query_as!(
         ContributionFromQuery,
-        r#"select contribution_id, event_id as "event_id: uuid::Uuid", guest_name, food_name from contribution where event_id = ?;"#,
+        r#"select contribution_id, event_id as "event_id: uuid::Uuid", name, guest from contribution where event_id = ?;"#,
         event_id
     )
     .map(ContributionFromQuery::into_contribution)
@@ -103,18 +87,13 @@ async fn get_event(
 
     tracing::debug!("{:?}", &event.date);
 
-    Ok(HtmlTemplate(EventTemp { 
-        event_id: event.id,
-         name: event.name,
-         date: event.date.format(&format_description::parse("[weekday], [day].[month].[year]").unwrap()).unwrap(),
-         contributions 
-    }).into_response()) 
+    Ok(Json(event)) 
 }
 
 async fn create_event(
     ctx: Extension<ApiContext>,
-    Form(event): Form<CreateEvent>,
-) -> Result<impl IntoResponse> {
+    Json(event): Json<CreateEvent>,
+) -> Result<String> {
     let uuid = Uuid::new_v4();
     sqlx::query!(
         r#"insert into event (event_id, name, date) values (?, ?, ?)"#,
@@ -126,5 +105,30 @@ async fn create_event(
     .await
     .context("could not insert new event into database")?;
 
-    Ok(HtmlTemplate(EventCreatedTemp { event_id: uuid }).into_response())
+    Ok(uuid.into())
+}
+
+#[derive(serde::Deserialize)]
+struct CreateContribution {
+    name: String,
+    guest: String,
+}
+
+async fn create_contribution(
+    ctx: Extension<ApiContext>,
+    Path(event_id): Path<Uuid>,
+    Json(contribution): Json<CreateContribution>,
+) -> Result<String> {
+    let contribution_id: i64 = sqlx::query!(
+        r#"insert into contribution (event_id, name, guest) VALUES (?,?,?)"#,
+        event_id,
+        contribution.name,
+        contribution.guest,
+    )
+    .execute(&ctx.db)
+    .await
+    .context("could not add new contribution")?
+    .last_insert_rowid();
+
+    Ok(contribution_id.to_string())
 }
