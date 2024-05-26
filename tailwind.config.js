@@ -3,11 +3,7 @@ const { fontFamily } = require('tailwindcss/defaultTheme');
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-    './templates/*.html',
-    './templates/components/*.html',
-    './templates/contribution/*.html',
-    './templates/event/*.html',
-    './templates/event/form/*.html'
+    './templates/*.html'
   ],
   theme: {
     extend: {
@@ -15,7 +11,6 @@ module.exports = {
         center: true,
         padding: '2rem',
         screens: {
-          DEFAULT: '100%',
           sm: '100%',
           md: '100%',
           lg: '40rem',
@@ -27,14 +22,11 @@ module.exports = {
         'cat-waves-mocha': "url('/assets/cat-waves-mocha.webp')",
       },
       colors: {
-        'primary': '#94e2d5',
-        'secondary': '#89b4fa',
-
         /*
         Catppuccin: https://github.com/catppuccin/catppuccin/blob/main/README.md
         Syle guide: https://github.com/catppuccin/catppuccin/blob/main/docs/style-guide.md
         */
-
+       
         'ctp-latte': {
           'rosewater': '#dc8a78',
           'flamingo': '#dd7878',
@@ -103,45 +95,10 @@ module.exports = {
           'base': '#1e1e2e',
           'mantle': '#181825',
           'crust': '#11111b'
-        },
-        
-        'ctp-frappe': {
-          'rosewater': '#f2d5cf',
-          'flamingo': '#eebebe',
-          'pink': '#f4b8e4',
-          'mauve': '#ca9ee6',
-          'red': '#e78284',
-          'maroon': '#ea999c',
-          'peach': '#ef9f76',
-          'yellow': '#e5c890',
-          'green': '#a6d189',
-          'teal': '#81c8be',
-          'sky': '#99d1db',
-          'sapphire': '#85c1dc',
-          'blue': '#8caaee',
-          'lavender': '#babbf1',
-          'text': '#c6d0f5',
-          'subtext': {
-            100: '#b5bfe2',
-            200: '#a5adce',
-          },
-          'overlay': {
-            100: '#949cbb',
-            200: '#838ba7',
-            300: '#737994',
-          },
-          'surface': {
-            100: '#626880',
-            200: '#51576d',
-            300: '#414559',
-          },
-          'base': '#303446',
-          'mantle': '#292c3c',
-          'crust': '#232634'
         }
       },
       fontFamily: {
-        sans: ['Inter var', ...fontFamily.sans],
+        sans: ['ui-rounded', 'Hiragino Maru Gothic ProN', 'Quicksand', 'Comfortaa', 'Manjari', 'Arial Rounded MT', 'Arial Rounded MT Bold', 'Calibri', 'source-sans-pro', 'sans-serif'],
       },
     },
   },
