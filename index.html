@@ -161,7 +161,7 @@
       </header>
 
       <div
-        x-show="eventUUID != null"
+        x-show="showEventURL"
         x-cloak
         class="p-4 rounded-lg drop-shadow-xl backdrop-blur-md bg-ctp-latte-mantle/75 dark:bg-ctp-mocha-mantle/75"
       >
@@ -383,6 +383,7 @@
           eventName: null,
           eventDate: null,
           eventUUID: null,
+          showEventURL: false,
           contributions: [],
           selectedMonth: null,
           selectedYear: null,
@@ -495,6 +496,7 @@
                 }),
               });
               this.eventUUID = await response.text();
+              this.showEventURL = true;
             } catch (error) {
               console.error("Error:", error);
             }
