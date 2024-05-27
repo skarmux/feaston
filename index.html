@@ -27,7 +27,12 @@
         x-show="eventUUID == null"
         x-cloak
       >
-        <label class="block mb-2" for="input-event-name">Event</label>
+        <label
+          class="block mb-2"
+          for="input-event-name"
+          data-i18n-key="label-event-name"
+          >Event</label
+        >
         <input
           type="text"
           id="input-event-name"
@@ -40,7 +45,12 @@
           required
         />
         <div class="mb-6">
-          <label class="block mb-2" for="input-event-date">Datum</label>
+          <label
+            class="block mb-2"
+            for="input-event-date"
+            data-i18n-key="label-event-date"
+            >Date</label
+          >
           <input
             type="date"
             id="input-event-date"
@@ -124,15 +134,16 @@
             </template>
           </div>
         </div>
-        <button @click="submitEvent()" class="w-full btn">Speichern</button>
+        <button
+          @click="submitEvent()"
+          class="w-full btn"
+          data-i18n-key="btn-event-submit"
+        >
+          Save
+        </button>
       </div>
 
       <header x-show="eventUUID != null" x-cloak class="text-left">
-        <p
-          class="text-sm font-medium text-ctp-latte-overlay-100 dark:text-ctp-mocha-overlay-100"
-        >
-          Event
-        </p>
         <h1
           class="text-4xl font-bold text-ctp-latte-teal dark:text-ctp-mocha-teal"
           x-text="eventName"
@@ -153,7 +164,12 @@
         x-cloak
         class="p-4 rounded-lg drop-shadow-xl backdrop-blur-md bg-ctp-latte-mantle/75 dark:bg-ctp-mocha-mantle/75"
       >
-        <label class="block mb-2" for="input-event-uuid">Link zum Event</label>
+        <label
+          class="block mb-2"
+          for="input-event-uuid"
+          data-i18n-key="label-event-url"
+          >Link to event</label
+        >
         <div class="flex flex-row gap-x-4 w-full">
           <input
             type="text"
@@ -165,9 +181,10 @@
           <button
             class="btn"
             id="copy_btn"
-            onclick="copyToClipboard('input-event-uuid')"
+            onclick="copyInputValueToClipboard('input-event-uuid')"
+            data-i18n-key="btn-event-url-copy"
           >
-            Kopieren
+            Copy
           </button>
         </div>
       </div>
@@ -193,8 +210,11 @@
       >
         <div class="flex flex-col items-center">
           <div class="mb-4 w-full">
-            <label class="block mb-2" for="input-contribution-name"
-              >Dein Beitrag</label
+            <label
+              class="block mb-2"
+              for="input-contribution-name"
+              data-i18n-key="label-contribution-name"
+              >Your Contribution</label
             >
             <input
               type="text"
@@ -207,8 +227,11 @@
             />
           </div>
           <div class="mb-8 w-full md:w-128">
-            <label class="block mb-2" for="input-contribution-guest"
-              >Dein Name</label
+            <label
+              class="block mb-2"
+              for="input-contribution-guest"
+              data-i18n-key="label-contribution-guest"
+              >Your Name</label
             >
             <input
               type="text"
@@ -219,8 +242,12 @@
               autocomplete="off"
             />
           </div>
-          <button @click="submitContribution()" class="w-full btn">
-            Eintragen
+          <button
+            @click="submitContribution()"
+            class="w-full btn"
+            data-i18n-key="btn-contribution-submit"
+          >
+            Submit
           </button>
         </div>
       </div>
@@ -234,6 +261,7 @@
           <a
             href="/contact"
             class="dark:hover:text-ctp-mocha-teal hover:text-ctp-latte-teal"
+            data-i18n-key="href-contact"
             >Contact</a
           >
         </p>
@@ -241,6 +269,7 @@
           <a
             href="/privacy"
             class="dark:hover:text-ctp-mocha-teal hover:text-ctp-latte-teal"
+            data-i18n-key="href-privacy"
             >Privacy</a
           >
         </p>
@@ -304,16 +333,11 @@
     </footer>
 
     <script>
-      function loadScript(url, fallbackUrl) {
+      /* try load scripts from CDN */
+      function loadScriptWithFallback(url, fallbackUrl) {
         var script = document.createElement("script");
         script.src = url;
-        script.onload = function () {
-          console.log("Script loaded successfully from " + url);
-        };
         script.onerror = function () {
-          console.log(
-            "Failed to load script from " + url + ", loading fallback script",
-          );
           if (fallbackUrl) {
             var fallbackScript = document.createElement("script");
             fallbackScript.src = fallbackUrl;
@@ -322,10 +346,37 @@
         };
         document.head.appendChild(script);
       }
-      loadScript(
+      loadScriptWithFallback(
         "https://unpkg.com/alpinejs@3.14.0/dist/cdn.min.js",
         "/assets/cdn.min.js",
       );
+      /* end try load scripts from CDN */
+
+      /* setup locale */
+      const supportedLanguages = ["en", "de"];
+      document.addEventListener("DOMContentLoaded", () => {
+        const browserPreferences = navigator.languages.map(
+          (locale) => locale.split("-")[0],
+        );
+        const lang = browserPreferences.find(isSupportedLanguage) || "en";
+        if (lang != "en") translatePage(lang);
+      });
+      function isSupportedLanguage(lang) {
+        return supportedLanguages.indexOf(lang) > -1;
+      }
+      async function translatePage(lang) {
+        const translation = await fetchTranslationsFor(lang);
+        document.querySelectorAll("[data-i18n-key]").forEach((element) => {
+          const key = element.getAttribute("data-i18n-key");
+          element.innerText = translation[key];
+        });
+      }
+      async function fetchTranslationsFor(newLocale) {
+        const response = await fetch(`/assets/i18n/${newLocale}.json`);
+        return await response.json();
+      }
+      /* end setup locale */
+
       function app() {
         return {
           eventName: null,
@@ -480,14 +531,11 @@
           },
         };
       }
-      function copyToClipboard(id) {
+      function copyInputValueToClipboard(id) {
         var copyText = document.getElementById(id);
         copyText.select();
         copyText.setSelectionRange(0, 99999); // For mobile devices
-
         navigator.clipboard.writeText(copyText.value);
-
-        document.getElementById("copy_btn").innerText = "Kopiert!";
       }
     </script>
   </body>

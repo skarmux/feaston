@@ -1,0 +1,11 @@
+{
+    "label-event-name": "Event",
+    "label-event-date": "Datum",
+    "label-event-url": "Link zum Event",
+    "btn-event-url-copy": "Kopieren",
+    "label-contribution-name": "Dein Beitrag",
+    "label-contribution-guest": "Dein Name",
+    "btn-contribution-submit": "Eintragen",
+    "href-privacy": "Datenschutz",
+    "href-contact": "Impressum"
+}
