@@ -21,7 +21,7 @@ body::-webkit-scrollbar-button {
 
 /* button */
 .btn {
-  @apply dark:text-ctp-mocha-base dark:bg-ctp-mocha-teal dark:border-ctp-mocha-teal text-ctp-latte-base bg-ctp-latte-teal border-ctp-latte-teal py-2 px-6 text-sm font-semibold text-center border-2 rounded-md;
+  @apply dark:text-ctp-mocha-base dark:bg-ctp-mocha-teal dark:border-ctp-mocha-teal text-ctp-latte-base bg-ctp-latte-teal border-ctp-latte-teal py-2 px-6 text-lg font-semibold text-center border-2 rounded-md;
 }
 .btn:hover {
   @apply text-ctp-latte-text bg-transparent shadow-ctp-latte-teal/20 dark:text-ctp-mocha-teal dark:shadow-ctp-mocha-teal/20;
