@@ -23,7 +23,8 @@
             <input
                 type="text"
                 id="input-event-name"
-                name="name"
+                name="name" 
+                x-model="eventName"
                 class="w-full input mb-4"
                 placeholder="My personal event"
                 :value="event"
@@ -31,7 +32,7 @@
                 required />
             <div class="mb-6" >
                 <label class="block mb-2" for="input-event-date">Datum</label>
-                <input type="date" id="input-event-date" name="date" :value="eventDate" required hidden />
+                <input type="date" id="input-event-date" name="date" :value="eventDate" required hidden x-model="eventDate"/>
                 <!-- < Month Year > -->
                 <div class="flex justify-between items-center mb-2">
                     <button 
@@ -85,7 +86,7 @@
         <header x-show="eventUUID != null" x-cloak class="text-left">
             <p class="text-sm font-medium text-ctp-latte-overlay-100 dark:text-ctp-mocha-overlay-100">Event</p>
             <h1 class="text-4xl font-bold text-ctp-latte-teal dark:text-ctp-mocha-teal" x-text="eventName"></h1>
-            <p class="text-xl" x-text="new Date(eventDate).toLocaleDateString(undefined, {
+            <p class="text-xl"  x-text="new Date(eventDate).toLocaleDateString(undefined, {
                 weekday: 'long',
                 year: 'numeric',
                 month: 'long',
@@ -298,8 +299,8 @@
                     }
                 },
                 async submitContribution() {
-                    const name = document.getElementById("contrib_name").value;
-                    const guest = document.getElementById("contrib_guest").value;
+                    const name = document.getElementById("input-contribution-name").value;
+                    const guest = document.getElementById("input-contribution-guest").value;
                     try {
                         const response = await fetch('/event/'+this.eventUUID+'/contributions', {
                             method: "POST",
@@ -313,8 +314,8 @@
                         });
                         let data = await response;
                         if (data.status === 200) {
-                            document.getElementById("contrib_name").value = "";
-                            document.getElementById("contrib_guest").value = "";
+                            document.getElementById("input-contribution-name").value = "";
+                            document.getElementById("input-contribution-guest").value = "";
                             this.contributions.push({name: name, guest: guest});
                         }
                     } catch (error) {
