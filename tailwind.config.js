@@ -7,7 +7,6 @@ module.exports = {
     extend: {
       container: {
         center: true,
-        padding: "2rem",
         screens: {
           sm: "100%",
           md: "100%",
@@ -20,11 +19,6 @@ module.exports = {
         "cat-waves-mocha": "url('/assets/cat-waves-mocha.webp')",
       },
       colors: {
-        /*
-        Catppuccin: https://github.com/catppuccin/catppuccin/blob/main/README.md
-        Syle guide: https://github.com/catppuccin/catppuccin/blob/main/docs/style-guide.md
-        */
-
         "ctp-latte": {
           rosewater: "#dc8a78",
           flamingo: "#dd7878",
