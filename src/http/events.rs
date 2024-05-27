@@ -1,11 +1,13 @@
 use anyhow::Context;
 use axum::{
-    extract::Path, routing::{get,post}, Extension, Json, Router 
+    extract::Path,
+    routing::{get, post},
+    Extension, Json, Router,
 };
+use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use time::OffsetDateTime;
 use uuid::Uuid;
-use serde::{Serialize,Deserialize};
 
 use crate::http::{ApiContext, Result};
 
@@ -55,7 +57,7 @@ pub struct Event {
     pub name: String,
     #[serde(with = "time::serde::rfc3339")]
     pub date: OffsetDateTime,
-    pub contributions: Vec<Contribution>
+    pub contributions: Vec<Contribution>,
 }
 
 #[derive(FromRow, Debug)]
@@ -76,10 +78,7 @@ impl EventFromQuery {
     }
 }
 
-async fn get_event(
-    ctx: Extension<ApiContext>,
-    Path(event_id): Path<Uuid>
-) -> Result<Json<Event>> {
+async fn get_event(ctx: Extension<ApiContext>, Path(event_id): Path<Uuid>) -> Result<Json<Event>> {
     let mut event: Event = sqlx::query_as!(
         EventFromQuery,
         r#"select event_id as "event_id: uuid::Uuid", name, date from event where event_id = ?;"#,
@@ -102,7 +101,7 @@ async fn get_event(
 
     tracing::debug!("{:?}", &event.date);
 
-    Ok(Json(event)) 
+    Ok(Json(event))
 }
 
 async fn create_event(

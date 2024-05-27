@@ -1,9 +1,9 @@
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
-use clap::Parser;
 use crate::config::Config;
 use anyhow::Context;
 use axum::Router;
+use clap::Parser;
 use sqlx::SqlitePool;
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
 /// Define common error type.
 mod error;
@@ -16,7 +16,7 @@ pub use error::{Error, ResultExt};
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 use tower::ServiceBuilder;
-use tower_http::{trace::TraceLayer, add_extension::AddExtensionLayer, services::ServeDir};
+use tower_http::{add_extension::AddExtensionLayer, services::ServeDir, trace::TraceLayer};
 
 #[derive(Clone)]
 struct ApiContext {
@@ -27,23 +27,29 @@ struct ApiContext {
 pub async fn serve(/*config: Config,*/ db: SqlitePool) -> anyhow::Result<()> {
     let assets_path = std::env::current_dir().unwrap();
 
-    let app = api_router().layer(
-        ServiceBuilder::new()
-            .layer(AddExtensionLayer::new(ApiContext {
-                // config: Arc::new(config),
-                db,
-            }))
-            .layer(TraceLayer::new_for_http())
-    ).nest_service("/assets", ServeDir::new(format!("{}/assets", assets_path.to_str().unwrap())))
-    .nest_service("/", ServeDir::new(format!("{}/index.html", assets_path.to_str().unwrap())));
+    let app = api_router()
+        .layer(
+            ServiceBuilder::new()
+                .layer(AddExtensionLayer::new(ApiContext {
+                    // config: Arc::new(config),
+                    db,
+                }))
+                .layer(TraceLayer::new_for_http()),
+        )
+        .nest_service(
+            "/assets",
+            ServeDir::new(format!("{}/assets", assets_path.to_str().unwrap())),
+        )
+        .nest_service(
+            "/",
+            ServeDir::new(format!("{}/index.html", assets_path.to_str().unwrap())),
+        );
 
     let config = Config::parse();
 
     let socket = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), config.port);
 
-    let listener = tokio::net::TcpListener::bind(socket)
-        .await
-        .unwrap();
+    let listener = tokio::net::TcpListener::bind(socket).await.unwrap();
 
     axum::serve(listener, app.into_make_service())
         .await
@@ -52,6 +58,5 @@ pub async fn serve(/*config: Config,*/ db: SqlitePool) -> anyhow::Result<()> {
 
 fn api_router() -> Router {
     // This is the order that the modules were authored in.
-    Router::new()
-        .merge(events::router())
+    Router::new().merge(events::router())
 }
