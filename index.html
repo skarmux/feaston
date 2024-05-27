@@ -17,7 +17,8 @@
     <div class="container flex-grow flex flex-col gap-y-4" x-data="app()" x-init="init()">
         <div
             class="p-4 w-full rounded-lg drop-shadow-xl backdrop-blur-md bg-ctp-latte-mantle/75 dark:bg-ctp-mocha-mantle/75"
-            x-show="eventUUID == null">
+            x-show="eventUUID == null"
+            x-cloak>
             <label class="block mb-2" for="input-event-name">Event</label>
             <input
                 type="text"
@@ -81,7 +82,7 @@
             <button @click="submitEvent()" class="w-full btn">Speichern</button>
         </div>
         
-        <header x-show="eventUUID != null" class="text-left">
+        <header x-show="eventUUID != null" x-cloak class="text-left">
             <p class="text-sm font-medium text-ctp-latte-overlay-100 dark:text-ctp-mocha-overlay-100">Event</p>
             <h1 class="text-4xl font-bold text-ctp-latte-teal dark:text-ctp-mocha-teal" x-text="eventName"></h1>
             <p class="text-xl" x-text="new Date(eventDate).toLocaleDateString(undefined, {
@@ -92,7 +93,7 @@
                 })"></p>
         </header>
     
-        <div x-show="eventUUID != null" class="p-4 rounded-lg drop-shadow-xl backdrop-blur-md bg-ctp-latte-mantle/75 dark:bg-ctp-mocha-mantle/75">
+        <div x-show="eventUUID != null" x-cloak class="p-4 rounded-lg drop-shadow-xl backdrop-blur-md bg-ctp-latte-mantle/75 dark:bg-ctp-mocha-mantle/75">
             <label class="block mb-2" for="input-event-uuid">Link zum Event</label>
             <div class="flex flex-row gap-x-4 w-full">       
                 <input type="text" :value="window.location.href + '?event=' + eventUUID" class="input w-full" id="input-event-uuid" disabled />
@@ -100,7 +101,7 @@
             </div>
         </div>
     
-        <ul x-show="eventUUID != null">
+        <ul x-show="eventUUID != null" x-cloak>
             <template x-for="contribution in contributions">
                 <li class="flex flex-grow p-4 my-2 w-full rounded-lg bg-ctp-latte-mantle/75 drop-shadow-xl backdrop-blur-md dark:bg-ctp-mocha-mantle/75">
                     <p class="flex-grow text-xl font-semibold text-left text-ctp-latte-teal dark:text-ctp-mocha-teal" x-text="contribution.name"></p>
@@ -109,7 +110,7 @@
             </template>
         </ul>
     
-        <div x-show="eventUUID != null" class="p-4 rounded-lg drop-shadow-xl backdrop-blur-md bg-ctp-latte-mantle/75 dark:bg-ctp-mocha-mantle/75">
+        <div x-show="eventUUID != null" x-cloak class="p-4 rounded-lg drop-shadow-xl backdrop-blur-md bg-ctp-latte-mantle/75 dark:bg-ctp-mocha-mantle/75">
             <div class="flex flex-col items-center">
                 <div class="mb-4 w-full">
                     <label class="block mb-2" for="input-contribution-name">Dein Beitrag</label>
