@@ -10,22 +10,39 @@
   <body
     class="flex flex-col min-h-screen bg-fixed bg-cover bg-ctp-latte-base dark:bg-ctp-mocha-base text-ctp-latte-text bg-cat-waves-latte dark:text-ctp-mocha-text dark:bg-cat-waves-mocha"
   >
-    <nav
-      class="sticky top-0 z-50 p-4 mb-10 drop-shadow-xl backdrop-blur-md bg-ctp-latte-mantle/75 dark:bg-ctp-mocha-mantle/75"
+    <!--<nav
+      class="sticky top-0 z-50 p-4 mb-4 drop-shadow-xl backdrop-blur-md bg-ctp-latte-mantle/75 dark:bg-ctp-mocha-mantle/75"
     >
-      <div class="flex flex-col gap-2 mx-auto text-center">
+      <div class="flex flex-col gap-2 mx-auto text-center cursor-default">
         <p>Feast On</p>
       </div>
-    </nav>
+    </nav>-->
 
     <div
       class="container p-2 flex flex-col flex-grow gap-y-4"
       x-data="app()"
       x-init="init()"
     >
+      <header x-show="eventUUID" x-cloak class="pl-4">
+        <h1
+          class="text-3xl font-bold text-ctp-latte-teal dark:text-ctp-mocha-teal"
+          x-text="eventName"
+        ></h1>
+        <p
+          class=""
+          x-text="new Date(eventDate).toLocaleDateString(undefined, {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                })"
+        ></p>
+      </header>
+
+      <!-- New event form -->
       <div
-        class="p-4 w-full rounded-lg drop-shadow-xl backdrop-blur-md bg-ctp-latte-mantle/75 dark:bg-ctp-mocha-mantle/75"
-        x-show="eventUUID == null"
+        class="p-4 w-full rounded-lg backdrop-blur-md bg-ctp-latte-mantle/75 dark:bg-ctp-mocha-mantle/75"
+        x-show="!eventUUID"
         x-cloak
       >
         <label
@@ -65,7 +82,7 @@
           <div class="flex justify-between items-center mb-2">
             <button
               type="button"
-              class="inline-flex disabled:bg-transparent btn disabled:text-ctp-mocha-surface-100 disabled:border-ctp-mocha-surface-100"
+              class="inline-flex disabled:bg-transparent btn text-lg disabled:text-ctp-mocha-surface-100 disabled:border-ctp-mocha-surface-100"
               :disabled="(new Date(selectedYear, selectedMonth, 0)).valueOf() < (new Date()).valueOf()"
               @click="prevMonth()"
             >
@@ -83,17 +100,17 @@
                 />
               </svg>
             </button>
-            <div>
+            <div class="text-lg cursor-default">
               <span
                 x-text="new Intl.DateTimeFormat(undefined, {month:'long'}).format(new Date(1970,selectedMonth,1))"
-                class="text-lg font-bold cursor-default"
+                class="font-bold"
               ></span>
               <span
                 x-text="selectedYear"
-                class="ml-1 text-lg font-normal cursor-default"
+                class="ml-1 font-normal "
               ></span>
             </div>
-            <button type="button" class="inline-flex btn" @click="nextMonth()">
+            <button type="button" class="inline-flex btn text-lg" @click="nextMonth()">
               <svg
                 class="inline-flex w-4 h-4"
                 fill="none"
@@ -116,7 +133,7 @@
               <div class="px-0.5 my-1 cursor-default">
                 <div
                   x-text="new Intl.DateTimeFormat(undefined,{weekday:'short'}).format(new Date(1970,1,1+i))"
-                  class="text-xs font-medium text-center text-ctp-latte-teal dark:text-ctp-mocha-teal"
+                  class="font-medium text-center text-ctp-latte-teal dark:text-ctp-mocha-teal"
                 ></div>
               </div>
             </template>
@@ -124,7 +141,7 @@
               <div
                 @click="pickDate(cell)"
                 x-text="cell"
-                class="content-center p-1 text-sm leading-loose text-center rounded-lg aspect-square outline-2"
+                class="content-center p-1 text-lg leading-loose text-center rounded-lg aspect-square outline-2"
                 :class="{
                                 'text-ctp-latte-surface-100 dark:text-ctp-mocha-surface-100 cursor-default': cell != null && isPassed(cell) && !isToday(cell),
                                 'outline outline-ctp-latte-teal dark:outline-ctp-mocha-teal text-ctp-latte-teal dark:text-ctp-mocha-teal font-semibold cursor-default': cell != null && isSelectedDate(cell),
@@ -144,26 +161,11 @@
         </button>
       </div>
 
-      <header x-show="eventUUID != null" x-cloak class="text-left">
-        <h1
-          class="text-4xl font-bold text-ctp-latte-teal dark:text-ctp-mocha-teal"
-          x-text="eventName"
-        ></h1>
-        <p
-          class="text-xl"
-          x-text="new Date(eventDate).toLocaleDateString(undefined, {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                })"
-        ></p>
-      </header>
-
+      <!-- Event url -->
       <div
         x-show="showEventURL"
         x-cloak
-        class="p-4 rounded-lg drop-shadow-xl backdrop-blur-md bg-ctp-latte-mantle/75 dark:bg-ctp-mocha-mantle/75"
+        class="p-4 rounded-lg backdrop-blur-md bg-ctp-latte-mantle/75 dark:bg-ctp-mocha-mantle/75"
       >
         <label
           class="block mb-2"
@@ -190,24 +192,40 @@
         </div>
       </div>
 
-      <ul x-show="eventUUID != null" x-cloak>
+      <!-- Contributions -->
+      <ul x-show="eventUUID" x-cloak>
         <template x-for="contribution in contributions">
           <li
-            class="flex flex-grow p-4 my-2 w-full rounded-lg bg-ctp-latte-mantle/75 drop-shadow-xl backdrop-blur-md dark:bg-ctp-mocha-mantle/75"
+            class="cursor-pointer px-4 py-2 mb-2 rounded-lg bg-ctp-latte-mantle/75 backdrop-blur-md dark:bg-ctp-mocha-mantle/75"
+            @click="dropdown = !dropdown"
+            x-data="{ dropdown: false, edit: false }"
           >
-            <p
-              class="flex-grow text-xl font-semibold text-left text-ctp-latte-teal dark:text-ctp-mocha-teal"
-              x-text="contribution.name"
-            ></p>
-            <p class="font-semibold" x-text="contribution.guest"></p>
+            <div class="flex flex-row">
+              <div
+                class="flex-grow text-left text-lg font-semibold text-ctp-latte-teal dark:text-ctp-mocha-teal"
+                x-text="contribution.name"
+              ></div>
+              <div x-text="contribution.guest"></div>
+              <div class="text-ctp-mocha-text content-center">
+                <svg class="w-2.5 h-2.5 ms-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                  <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
+                </svg>
+              </div>
+            </div>
+            <div class="flex flex-col gap-y-4 mt-4 items-center" x-show="dropdown">
+              <button 
+                class="btn mb-2 w-1/2 dark:bg-ctp-mocha-red dark:border-ctp-mocha-red dark:hover:text-ctp-mocha-red"
+                @click="deleteContribution(contribution.id)">Delete</button>
+            </div>
           </li>
         </template>
       </ul>
 
+      <!-- New contribution -->
       <div
-        x-show="eventUUID != null"
+        x-show="eventUUID"
         x-cloak
-        class="p-4 rounded-lg drop-shadow-xl backdrop-blur-md bg-ctp-latte-mantle/75 dark:bg-ctp-mocha-mantle/75"
+        class="p-4 rounded-lg backdrop-blur-md bg-ctp-latte-mantle/75 dark:bg-ctp-mocha-mantle/75"
       >
         <div class="flex flex-col items-center">
           <div class="mb-4 w-full">
@@ -244,7 +262,7 @@
           </div>
           <button
             @click="submitContribution()"
-            class="w-full btn"
+            class="w-1/2 btn"
             data-i18n-key="btn-contribution-submit"
           >
             Submit
@@ -254,7 +272,7 @@
     </div>
 
     <footer
-      class="overflow-hidden py-12 px-4 mt-10 space-y-8 drop-shadow-xl backdrop-blur-md bg-ctp-latte-mantle/75 dark:bg-ctp-mocha-mantle/75"
+      class="overflow-hidden py-12 px-4 mt-10 space-y-8 backdrop-blur-md bg-ctp-latte-mantle/75 dark:bg-ctp-mocha-mantle/75"
     >
       <nav class="flex flex-wrap justify-center -my-2 -mx-5">
         <p class="py-2 px-5">
@@ -329,7 +347,7 @@
           </svg>
         </a>
       </div>
-      <p class="mt-8 text-center">&copy; 2024 Nils Harbke</p>
+      <p class="mt-8 text-center cursor-default">&copy; 2024 Nils Harbke</p>
     </footer>
 
     <script>
@@ -509,7 +527,7 @@
             ).value;
             try {
               const response = await fetch(
-                "/event/" + this.eventUUID + "/contributions",
+                "/event/" + this.eventUUID + "/contribution",
                 {
                   method: "POST",
                   headers: {
@@ -521,15 +539,29 @@
                   }),
                 },
               );
-              let data = await response;
-              if (data.status === 200) {
-                document.getElementById("input-contribution-name").value = "";
-                document.getElementById("input-contribution-guest").value = "";
-                this.contributions.push({ name: name, guest: guest });
-              }
+              const contribution_id = await response.text();
+              document.getElementById("input-contribution-name").value = "";
+              document.getElementById("input-contribution-guest").value = "";
+              this.contributions.push({ id: contribution_id, name: name, guest: guest });
             } catch (error) {
               console.error("Error:", error);
             }
+          },
+          async deleteContribution(id) {
+            const response = await fetch(
+              "/event/"+this.eventUUID+"/contribution/"+id,
+              {
+                method: "DELETE",
+              }
+            );
+            const data = await response;
+            console.log(data);
+            if (data.status === 200) {
+              this.contributions = this.contributions.filter((contribution) => {
+                if (contribution.id === id) return false;
+                return true;
+              });
+            };
           },
         };
       }

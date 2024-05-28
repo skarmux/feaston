@@ -1,8 +1,6 @@
 use anyhow::Context;
 use axum::{
-    extract::Path,
-    routing::{get, post},
-    Extension, Json, Router,
+    extract::Path, http::StatusCode, routing::{get, post, delete}, Extension, Json, Router
 };
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -14,7 +12,8 @@ use crate::http::{ApiContext, Result};
 pub fn router() -> Router {
     Router::new()
         .route("/event/:id", get(get_event))
-        .route("/event/:id/contributions", post(create_contribution))
+        .route("/event/:id/contribution", post(create_contribution))
+        .route("/event/:event_id/contribution/:contribution_id", delete(delete_contribution))
         .route("/event", post(create_event))
 }
 
@@ -91,7 +90,7 @@ async fn get_event(ctx: Extension<ApiContext>, Path(event_id): Path<Uuid>) -> Re
 
     event.contributions = sqlx::query_as!(
         ContributionFromQuery,
-        r#"select contribution_id, event_id as "event_id: uuid::Uuid", name, guest from contribution where event_id = ?;"#,
+        r#"select contribution_id, event_id as "event_id: uuid::Uuid", name, guest from contribution where event_id = ? order by created_at;"#,
         event_id
     )
     .map(ContributionFromQuery::into_contribution)
@@ -145,4 +144,20 @@ async fn create_contribution(
     .last_insert_rowid();
 
     Ok(contribution_id.to_string())
+}
+
+async fn delete_contribution(
+    ctx: Extension<ApiContext>,
+    Path((event_id, contribution_id)): Path<(Uuid, i64)>,
+) -> Result<StatusCode> {
+    sqlx::query!(
+        r#"delete from contribution where contribution_id = ? and event_id = ?"#,
+        contribution_id,
+        event_id
+    )
+    .execute(&ctx.db)
+    .await
+    .context("could not deletet contribution")?;
+
+    Ok(StatusCode::OK)
 }
