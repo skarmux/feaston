@@ -18,11 +18,11 @@
     systems = [ "x86_64-linux" "aarch64-linux" ];
 
     flake = {
-      nixosModules.feaston = import ./modules/feaston;
-      nixosModules.default = self.nixosModules.feaston;
-      homeManagerModules = import ./modules/home-manager/feaston.nix;
-      homeManagerModules.default = self.homeManagerModules.feaston;
+      
     };
+
+    nixosModules.feaston = import ./modules/feaston;
+    nixosModules.default = self.nixosModules.feaston;
 
     perSystem = { pkgs, system, ... }:
     let
@@ -102,6 +102,6 @@
         inherit feaston;
       };
 
-    }; # perSystem
-  }; # outputs
+    };
+  };
 }

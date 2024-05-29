@@ -4,23 +4,20 @@ let
   cfg = config.feaston;
 in
 {
-    options.feaston = {
-        domain = mkOption {
-        type = types.str;
-        description = ''
-            Domain from which the service will be exposed.
-        '';
-        };
-    };
+    systemd.services.feaston = {
+        description = "Feast On event contribution planner";
 
-    config = lib.mkIf cfg.enable {
-        services.nginx = {
-            enable = true;
-            virtualHosts = {
-                cfg.domain = {
-                    locations."/".proxyPass = "http://127.0.0.1:5000";
-                };
-            };
+        after = [ "network-online.target" ];
+        wants = [ "network-online.target" ];
+        wantedBy = [ "multi-user.target" ];
+
+        serviceConfig = {
+            User = "feaston";
+            Group = "feaston";
+            Restart = "always";
+            ExecStart = "${cfg.package}/bin/feaston";
+            StateDirectory = "feaston";
+            StateDirectoryMode = "0750";        
         };
     };
 }
