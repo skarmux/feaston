@@ -1,8 +1,4 @@
 { config, lib, pkgs, ... }:
-let
-  inherit (lib) mkOption types mkEnableOption;
-  cfg = config.feaston;
-in
 {
     systemd.services.feaston = {
         description = "Feast On event contribution planner";
