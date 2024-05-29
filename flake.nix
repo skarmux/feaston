@@ -18,14 +18,11 @@
     systems = [ "x86_64-linux" "aarch64-linux" ];
 
     flake = {
-      
+      nixosModules = rec {
+        feaston = import ./modules/feaston;
+        default = feaston;
+      };
     };
-
-    nixosModules = rec {
-      feaston = import ./modules/feaston;
-      default = feaston;
-    };
-    
 
     perSystem = { pkgs, system, ... }:
     let
