@@ -13,13 +13,13 @@
     flake-parts.url = "github:hercules-ci/flake-parts";
   };
 
-  outputs = inputs @ { crane, fenix, flake-parts, ... }:
+  outputs = inputs @ { self, crane, fenix, flake-parts, ... }:
   flake-parts.lib.mkFlake { inherit inputs; } {
     systems = [ "x86_64-linux" "aarch64-linux" ];
 
     flake = {
       nixosModules = rec {
-        feaston = import ./modules/feaston;
+        feaston = import ./modules/feaston inputs;
         default = feaston;
       };
     };

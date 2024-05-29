@@ -1,5 +1,6 @@
-{ config, lib, pkgs, ... }:
+inputs: { config, lib, pkgs, ... }:
 let
+  inherit (pkgs.stdenv.hostPlatform) system;
   inherit (lib) mkOption types mkEnableOption;
   cfg = config.feaston;
 in
@@ -10,7 +11,7 @@ in
         '';
         package = mkOption {
             type = types.package;
-            default = flake.packages.${pkgs.system}.default;
+            default = inputs.self.packages.${system}.default;
             description = ''
                 The package to use with the service.
             '';
