@@ -18,8 +18,10 @@
     systems = [ "x86_64-linux" "aarch64-linux" ];
 
     flake = {
-      nixosModules = import ./modules/nixos/feaston.nix;
+      nixosModules.feaston = import ./modules/feaston;
+      nixosModules.default = self.nixosModules.feaston;
       homeManagerModules = import ./modules/home-manager/feaston.nix;
+      homeManagerModules.default = self.homeManagerModules.feaston;
     };
 
     perSystem = { pkgs, system, ... }:
