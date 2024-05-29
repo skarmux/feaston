@@ -21,8 +21,11 @@
       
     };
 
-    nixosModules.feaston = import ./modules/feaston;
-    nixosModules.default = self.nixosModules.feaston;
+    nixosModules = rec {
+      feaston = import ./modules/feaston;
+      default = feaston;
+    };
+    
 
     perSystem = { pkgs, system, ... }:
     let
