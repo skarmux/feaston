@@ -80,7 +80,7 @@ in
                 WantedBy = [ "multi-user.target" ];
               };
               Service = {
-                ExecStart = "${cfg.package}/bin/feaston --database-url ${cfg.databaseUrl} --port ${toString cfg.port}";
+                ExecStart = "${cfg.package}/bin/feaston --database-url ${cfg.databaseURL} --port ${toString cfg.port}";
                 Restart = "always";
               };
             };
