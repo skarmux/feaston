@@ -7,13 +7,15 @@
     };
     fenix = {
       url = "github:nix-community/fenix";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.rust-analyzer-src.follows = "";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        rust-analyzer-src.follows = "";
+      };
     };
     flake-parts.url = "github:hercules-ci/flake-parts";
   };
 
-  outputs = inputs @ { self, crane, fenix, flake-parts, ... }:
+  outputs = inputs @ { crane, fenix, flake-parts, ... }:
   flake-parts.lib.mkFlake { inherit inputs; } {
     systems = [ "x86_64-linux" "aarch64-linux" ];
 
@@ -33,17 +35,9 @@
 
       craneLib = (crane.mkLib pkgs).overrideToolchain toolchain;
 
-      # sqlFilter = path: _type: null != builtins.match ".*sql$" path;
-      # sqlOrCargo = path: type: (sqlFilter path type) || (craneLib.filterCargoSources path type);
-
-      # src = pkgs.lib.cleanSourceWith {
-      #   src = craneLib.path ./.; # The original, unfiltered source
-      #   filter = sqlOrCargo;
-      # };
-
       commonArgs = {
-        # inherit src;
         src = ./.;
+
         strictDeps = true;
 
         nativeBuildInputs = [
@@ -62,6 +56,7 @@
 
         nativeBuildInputs = (commonArgs.nativeBuildInputs or [ ]) ++ [
           pkgs.sqlx-cli
+          pkgs.tailwindcss
         ];
 
         preBuild = ''
@@ -72,9 +67,9 @@
         '';
         
         postInstall = ''
-          cp -r templates $out/
-          cp -r assets $out/
+          cp -r www $out/
           cp -r migrations $out/
+          tailwindcss -i styles/tailwind.css --minify -o $out/www/assets/main.css
         '';
       });
     in {
@@ -86,10 +81,12 @@
         DATABASE_URL="sqlite:./db.sqlite?mode=rwc";
         
         packages = with pkgs; [
+          nginx
           sqlx-cli
           tailwindcss
           cargo-watch
           mprocs
+          grc
           
           # Formatter
           rustfmt

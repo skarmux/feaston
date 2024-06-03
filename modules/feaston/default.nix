@@ -40,30 +40,52 @@ in
     };
 
     config = lib.mkIf cfg.enable {
+        
+        users.users.feaston = {
+          isNormalUser = true;
+          password = "";
+          # Allow user services to run without an active user session
+          linger = true;
+        };
+
         services.nginx = {
             enable = true;
             virtualHosts = {
                 "${cfg.domain}" = {
-                    locations."/".proxyPass = "http://127.0.0.1:${toString cfg.port}";
+                    root = cfg.package;
+                    locations."/" = {
+                      tryFiles = "$uri $uri/ /index.html";
+                    };
+                    locations."~\.css" = {
+                      extraConfig = ''add_header Content-Type text/css'';
+                    };
+                    locations."~\.js" = {
+                      extraConfig = ''add_header Content-Type application/x-javascript'';
+                    };
+                    locations."/api/" = {
+                      proxyPass = "http://127.0.0.1:${toString cfg.port}";
+                    };
                 };
             };
         };
-        systemd.services.feaston = {
-            description = "Feast On event contribution planner";
 
-            after = [ "network-online.target" ];
-            wants = [ "network-online.target" ];
-            wantedBy = [ "multi-user.target" ];
-
-            serviceConfig = {
-                User = "feaston";
-                Group = "feaston";
+        home-manager.users.feaston = {
+          systemd.user = {
+            startServices = "sd-switch";
+            services."feaston" = {
+              Unit = {
+                Description = "Serve Feast-On web service.";
+              };
+              Install = {
+                WantedBy = [ "multi-user.target" ];
+              };
+              Service = {
+                ExecStart = "${cfg.package}/bin/feaston --database-url ${cfg.databaseUrl} --port ${toString cfg.port}";
                 Restart = "always";
-                ExecStart = "${cfg.package}/bin/feaston";
-                StateDirectory = "feaston";
-                StateDirectoryMode = "0750";        
+              };
             };
+          };
+          home.stateVersion = "24.05";
         };
     };
-    
 }

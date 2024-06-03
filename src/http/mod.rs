@@ -16,7 +16,7 @@ pub use error::{Error, ResultExt};
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 use tower::ServiceBuilder;
-use tower_http::{add_extension::AddExtensionLayer, services::ServeDir, trace::TraceLayer};
+use tower_http::{add_extension::AddExtensionLayer, trace::TraceLayer};
 
 #[derive(Clone)]
 struct ApiContext {
@@ -25,25 +25,24 @@ struct ApiContext {
 }
 
 pub async fn serve(/*config: Config,*/ db: SqlitePool) -> anyhow::Result<()> {
-    let assets_path = std::env::current_dir().unwrap();
+    // let assets_path = std::env::current_dir().unwrap();
 
-    let app = api_router()
-        .layer(
-            ServiceBuilder::new()
-                .layer(AddExtensionLayer::new(ApiContext {
-                    // config: Arc::new(config),
-                    db,
-                }))
-                .layer(TraceLayer::new_for_http()),
-        )
-        .nest_service(
-            "/assets",
-            ServeDir::new(format!("{}/assets", assets_path.to_str().unwrap())),
-        )
-        .nest_service(
-            "/",
-            ServeDir::new(format!("{}/index.html", assets_path.to_str().unwrap())),
-        );
+    let app = api_router().layer(
+        ServiceBuilder::new()
+            .layer(AddExtensionLayer::new(ApiContext {
+                // config: Arc::new(config),
+                db,
+            }))
+            .layer(TraceLayer::new_for_http()),
+    );
+    // .nest_service(
+    //     "/assets",
+    //     ServeDir::new(format!("{}/assets", assets_path.to_str().unwrap())),
+    // )
+    // .nest_service(
+    //     "/",
+    //     ServeDir::new(format!("{}/index.html", assets_path.to_str().unwrap())),
+    // );
 
     let config = Config::parse();
 
