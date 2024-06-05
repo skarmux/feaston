@@ -1,22 +1,16 @@
 [package]
 name = "feaston"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
 publish = false
-authors = [
-  "Nils Harbke <nils.harbke@proton.me>"
-]
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+authors = ["Nils Harbke <nils.harbke@proton.me>"]
 
 [dependencies]
-# Core dependencies: runtime, HTTP framework and database client
-futures = "0.3"
 tokio = { version = "1.0", features = ["macros", "rt-multi-thread"] }
 axum = { version = "0.7.4", features = ["tower-log"] }
 sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "uuid", "time", "sqlite", "macros" ] }
+futures = "0.3"
 
-# Pass command line parameters
 clap = { version = "4.4.18", features = ["derive", "env"] }
 
 serde = { version = "1.0", features = ["derive"] }
@@ -34,17 +28,10 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 anyhow = "1.0.79"
 dotenv = "0.15.0"
 env_logger = "0.11.0"
-itertools = "0.12.0"
 log = "0.4.20"
-rand = "0.8.5"
 thiserror = "1.0.56"
-rayon = "1.8.1"
 time = { version = "0.3.31", features = ["serde-well-known", "macros", "parsing", "formatting"] }
-axum-htmx = "0.5.0"
-icu = "1.4.0"
 
 [dev-dependencies]
-# Enable file system watchers
 listenfd = "1.0.1"
-tower-livereload = "0.9.1"
 
