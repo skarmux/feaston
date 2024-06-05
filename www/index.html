@@ -5,18 +5,18 @@
     <title>Feast On</title>
     <link href="/assets/favicon.ico" rel="icon" type="image/x-icon" />
     <link href="/assets/main.css" rel="stylesheet" type="text/css" />
+    <script src="/assets/cdn.min.js" defer></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 
 <body
     class="flex flex-col min-h-screen bg-fixed bg-cover bg-ctp-latte-base dark:bg-ctp-mocha-base text-ctp-latte-text bg-cat-waves-latte dark:text-ctp-mocha-text dark:bg-cat-waves-mocha">
-    <!--<nav
-      class="sticky top-0 z-50 p-4 mb-4 drop-shadow-xl backdrop-blur-md bg-ctp-latte-mantle/75 dark:bg-ctp-mocha-mantle/75"
-    >
-      <div class="flex flex-col gap-2 mx-auto text-center cursor-default">
-        <p>Feast On</p>
-      </div>
-    </nav>-->
+    <nav
+        class="sticky top-0 z-50 p-4 mb-4 drop-shadow-xl backdrop-blur-md bg-ctp-latte-mantle/75 dark:bg-ctp-mocha-mantle/75">
+        <div class="flex flex-col gap-2 mx-auto text-center cursor-default">
+            <p>Feast On</p>
+        </div>
+    </nav>
 
     <div class="container p-2 flex flex-col flex-grow gap-y-4" x-data="app()" x-init="init()">
         <header x-show="eventUUID" x-cloak class="pl-4">
@@ -194,25 +194,6 @@
     </footer>
 
     <script>
-        /* try load scripts from CDN */
-        function loadScriptWithFallback(url, fallbackUrl) {
-            var script = document.createElement("script");
-            script.src = url;
-            script.onerror = function () {
-                if (fallbackUrl) {
-                    var fallbackScript = document.createElement("script");
-                    fallbackScript.src = fallbackUrl;
-                    document.head.appendChild(fallbackScript);
-                }
-            };
-            document.head.appendChild(script);
-        }
-        loadScriptWithFallback(
-            "https://unpkg.com/alpinejs@3.14.0/dist/cdn.min.js",
-            "/assets/cdn.min.js",
-        );
-        /* end try load scripts from CDN */
-
         /* setup locale */
         const supportedLanguages = ["en", "de"];
         document.addEventListener("DOMContentLoaded", () => {
