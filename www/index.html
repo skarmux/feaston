@@ -42,7 +42,7 @@
                     x-model="eventDate" />
                 <!-- < Month Year > -->
                 <div class="flex justify-between items-center mb-2">
-                    <button type="button"
+                    <button type="button" aria-label="Show previous month"
                         class="inline-flex disabled:bg-transparent btn text-lg disabled:text-ctp-mocha-surface-100 disabled:border-ctp-mocha-surface-100"
                         :disabled="(new Date(selectedYear, selectedMonth, 0)).valueOf() < (new Date()).valueOf()"
                         @click="prevMonth()">
@@ -56,7 +56,8 @@
                             class="font-bold"></span>
                         <span x-text="selectedYear" class="ml-1 font-normal "></span>
                     </div>
-                    <button type="button" class="inline-flex btn text-lg" @click="nextMonth()">
+                    <button type="button" aria-label="Show next month" class="inline-flex btn text-lg"
+                        @click="nextMonth()">
                         <svg class="inline-flex w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                         </svg>
