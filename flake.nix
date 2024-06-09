@@ -56,7 +56,6 @@
 
         nativeBuildInputs = (commonArgs.nativeBuildInputs or [ ]) ++ [
           pkgs.sqlx-cli
-          pkgs.tailwindcss
         ];
 
         preBuild = ''
@@ -69,7 +68,12 @@
         postInstall = ''
           cp -r www $out/
           cp -r migrations $out/
-          tailwindcss -i styles/tailwind.css --minify -o $out/www/assets/main.css
+          ${pkgs.tailwindcss}/bin/tailwindcss -i styles/tailwind.css --minify -o $out/www/assets/main.css
+
+          for file in $(find $out/www -type f \( -name "*.css" -o -name "*.js" -o -name "*.html" \)); do
+            ${pkgs.brotli}/bin/brotli --best --keep $file
+            ${pkgs.gzip}/bin/gzip --best --keep $file
+          done
         '';
       });
     in {
