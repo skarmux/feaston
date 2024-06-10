@@ -15,19 +15,25 @@
     flake-parts.url = "github:hercules-ci/flake-parts";
   };
 
-  outputs = inputs @ { crane, fenix, flake-parts, ... }:
+  outputs = inputs @ { nixpkgs, crane, fenix, flake-parts, ... }:
   flake-parts.lib.mkFlake { inherit inputs; } {
-    systems = [ "x86_64-linux" "aarch64-linux" ];
-
     flake = {
-      nixosModules = rec {
-        feaston = import ./modules/feaston inputs;
-        default = feaston;
-      };
+      # nixosModules = rec {
+      #   feaston = import ./modules/feaston inputs;
+      #   default = feaston;
+      # };
     };
 
-    perSystem = { pkgs, system, ... }:
+    systems = [ "x86_64-linux" "aarch64-linux" ];
+
+    perSystem = { system, ... }:
     let
+      crossSystem = "aarch64-linux";
+
+      pkgs = import nixpkgs {
+        inherit system crossSystem;
+      };
+
       toolchain = fenix.packages.${system}.fromToolchainFile {
         file = ./rust-toolchain.toml;
         sha256 = "sha256-opUgs6ckUQCyDxcB9Wy51pqhd0MPGHUVbwRKKPGiwZU=";
@@ -35,47 +41,62 @@
 
       craneLib = (crane.mkLib pkgs).overrideToolchain toolchain;
 
-      commonArgs = {
+      # commonArgs = { lib, libiconv, pkg-config, qemu, stdenv, sqlx-cli }:
+      # {
+      # };
+
+      # cargoArtifacts = craneLib.buildDepsOnly commonArgs;
+
+      crateExpression = { gcc, pkg-config, qemu, stdenv, sqlx-cli, brotli, gzip, tailwindcss }:
+      craneLib.buildPackage {
+
         src = ./.;
 
         strictDeps = true;
 
+        depsBuildBuild = [
+          qemu
+          gcc
+        ];
+
         nativeBuildInputs = [
-          pkgs.pkg-config
+          pkg-config
+          stdenv.cc
+          gcc
         ];
 
         buildInputs = [
-          pkgs.openssl
+          # pkgs.openssl
         ];
-      };
 
-      cargoArtifacts = craneLib.buildDepsOnly commonArgs;
+        CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER = "${stdenv.cc.targetPrefix}cc";
+        CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUNNER = "qemu-aarch64";
 
-      feaston = craneLib.buildPackage (commonArgs // {
-        inherit cargoArtifacts;
+        cargoExtraArgs = "--target aarch64-unknown-linux-gnu";
 
-        nativeBuildInputs = (commonArgs.nativeBuildInputs or [ ]) ++ [
-          pkgs.sqlx-cli
-        ];
+        HOST_CC = "${stdenv.cc.nativePrefix}cc";
+        TARGET_CC = "${stdenv.cc.targetPrefix}cc";
 
         preBuild = ''
           export DATABASE_URL=sqlite:./db.sqlite?mode=rwc
-          sqlx database create
+          ${sqlx-cli}/bin/sqlx database create
           mkdir -p migrations
-          sqlx migrate run
+          ${sqlx-cli}/bin/sqlx migrate run
         '';
         
         postInstall = ''
           cp -r www $out/
           cp -r migrations $out/
-          ${pkgs.tailwindcss}/bin/tailwindcss -i styles/tailwind.css --minify -o $out/www/assets/main.css
+          ${tailwindcss}/bin/tailwindcss -i styles/tailwind.css --minify -o $out/www/assets/main.css
 
           for file in $(find $out/www -type f \( -name "*.css" -o -name "*.js" -o -name "*.html" \)); do
-            ${pkgs.brotli}/bin/brotli --best --keep $file
-            ${pkgs.gzip}/bin/gzip --best --keep $file
+            ${brotli}/bin/brotli --best --keep $file
+            ${gzip}/bin/gzip --best --keep $file
           done
         '';
-      });
+      };
+
+      feaston = pkgs.callPackage crateExpression { };
     in {
 
       packages.default = feaston;
@@ -89,13 +110,13 @@
           sqlx-cli
           tailwindcss
           cargo-watch
-          mprocs
-          grc
+          # mprocs
+          # grc
           
           # Formatter
-          rustfmt
-          rustywind # CLI for organizing Tailwind CSS classes
-          nodePackages.prettier
+          # rustfmt
+          # rustywind # CLI for organizing Tailwind CSS classes
+          # nodePackages.prettier
         ];
       };
 
