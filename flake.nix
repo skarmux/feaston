@@ -1,4 +1,9 @@
 {
+  nixConfig = {
+    extra-substituters = [ "https://nix-community.cachix.org" ];
+    extra-trusted-public-keys = [ "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=" ];
+  };
+
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-24.05";
     crane = {
@@ -12,21 +17,12 @@
         rust-analyzer-src.follows = "";
       };
     };
-    flake-parts.url = "github:hercules-ci/flake-parts";
+    # flake-parts.url = "github:hercules-ci/flake-parts";
+    flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = inputs @ { nixpkgs, crane, fenix, flake-parts, ... }:
-  flake-parts.lib.mkFlake { inherit inputs; } {
-    flake = {
-      # nixosModules = rec {
-      #   feaston = import ./modules/feaston inputs;
-      #   default = feaston;
-      # };
-    };
-
-    systems = [ "x86_64-linux" "aarch64-linux" ];
-
-    perSystem = { system, ... }:
+  outputs = inputs @ { self, nixpkgs, crane, fenix, flake-utils, ... }:
+  flake-utils.lib.eachDefaultSystem (system:
     let
       crossSystem = "aarch64-linux";
 
@@ -41,33 +37,61 @@
 
       craneLib = (crane.mkLib pkgs).overrideToolchain toolchain;
 
-      # commonArgs = { lib, libiconv, pkg-config, qemu, stdenv, sqlx-cli }:
-      # {
-      # };
-
-      # cargoArtifacts = craneLib.buildDepsOnly commonArgs;
-
-      crateExpression = { gcc, pkg-config, qemu, stdenv, sqlx-cli, brotli, gzip, tailwindcss }:
-      craneLib.buildPackage {
-
+      commonArgs = { qemu, gcc, pkg-config, stdenv }:
+      {
         src = ./.;
-
         strictDeps = true;
 
-        depsBuildBuild = [
-          qemu
-          gcc
-        ];
+        depsBuildBuild = [ qemu gcc ];
 
-        nativeBuildInputs = [
-          pkg-config
-          stdenv.cc
-          gcc
-        ];
+        nativeBuildInputs = [ pkg-config stdenv.cc gcc ];
 
-        buildInputs = [
-          # pkgs.openssl
-        ];
+        buildInputs = [ ];
+
+        CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER = "${stdenv.cc.targetPrefix}cc";
+        CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUNNER = "qemu-aarch64";
+
+        cargoExtraArgs = "--target aarch64-unknown-linux-gnu";
+
+        HOST_CC = "${stdenv.cc.nativePrefix}cc";
+        TARGET_CC = "${stdenv.cc.targetPrefix}cc";
+      };
+
+      cargoArtifactsExpression = { qemu, gcc, pkg-config, stdenv }:
+      craneLib.buildDepsOnly
+      {
+        src = ./.;
+        strictDeps = true;
+
+        depsBuildBuild = [ qemu gcc ];
+
+        nativeBuildInputs = [ pkg-config stdenv.cc gcc ];
+
+        buildInputs = [ ];
+
+        CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER = "${stdenv.cc.targetPrefix}cc";
+        CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUNNER = "qemu-aarch64";
+
+        cargoExtraArgs = "--target aarch64-unknown-linux-gnu";
+
+        HOST_CC = "${stdenv.cc.nativePrefix}cc";
+        TARGET_CC = "${stdenv.cc.targetPrefix}cc";
+      };
+
+      cargoArtifacts = pkgs.callPackage cargoArtifactsExpression { };
+
+      crateExpression = { qemu, gcc, pkg-config, stdenv, sqlx-cli, brotli, gzip, tailwindcss }:
+      craneLib.buildPackage
+      {
+        inherit cargoArtifacts;
+        src = ./.;
+        strictDeps = true;
+
+        depsBuildBuild = [ qemu gcc ];
+
+        nativeBuildInputs = [ pkg-config stdenv.cc gcc ];
+
+        buildInputs = [ ];
 
         CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER = "${stdenv.cc.targetPrefix}cc";
         CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUNNER = "qemu-aarch64";
@@ -83,12 +107,10 @@
           mkdir -p migrations
           ${sqlx-cli}/bin/sqlx migrate run
         '';
-        
         postInstall = ''
           cp -r www $out/
           cp -r migrations $out/
           ${tailwindcss}/bin/tailwindcss -i styles/tailwind.css --minify -o $out/www/assets/main.css
-
           for file in $(find $out/www -type f \( -name "*.css" -o -name "*.js" -o -name "*.html" \)); do
             ${brotli}/bin/brotli --best --keep $file
             ${gzip}/bin/gzip --best --keep $file
@@ -98,11 +120,14 @@
 
       feaston = pkgs.callPackage crateExpression { };
     in {
+      checks = {
+        inherit feaston;
+      };
 
       packages.default = feaston;
 
       devShells.default = craneLib.devShell {
-        
+
         DATABASE_URL="sqlite:./db.sqlite?mode=rwc";
         
         packages = with pkgs; [
@@ -119,11 +144,5 @@
           # nodePackages.prettier
         ];
       };
-
-      checks = {
-        inherit feaston;
-      };
-
-    };
-  };
+    });
 }
