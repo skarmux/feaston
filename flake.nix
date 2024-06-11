@@ -113,6 +113,10 @@
 
         DATABASE_URL="sqlite:./db.sqlite?mode=rwc";
 
+        shellHook = ''
+          echo "Don't forget to run 'nginx -p nginx -c nginx.conf -e error.log' once before 'mprocs'."
+        '';
+
         packages = with nixpkgs.legacyPackages."x86_64-linux"; [
           nginx
           sqlx-cli
@@ -120,6 +124,9 @@
           cargo-watch
           mprocs
           grc
+
+          # Would be provided by craneLib.devShell if it werent broken for
+          # cross compilation setup
           cargo
           rustc
           
