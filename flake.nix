@@ -23,34 +23,30 @@
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = inputs @ { nixpkgs, crane, fenix, flake-utils, ... }:
-  flake-utils.lib.eachDefaultSystem (system:
+  outputs = { nixpkgs, crane, fenix, flake-utils, ... }:
+  flake-utils.lib.eachDefaultSystem (localSystem:
     let
       pkgs = import nixpkgs {
-        inherit system;
+        inherit localSystem;
         crossSystem = "aarch64-linux";
       };
 
-      toolchain = fenix.packages.${system}.fromToolchainFile {
+      toolchain = fenix.packages.${localSystem}.fromToolchainFile {
         file = ./rust-toolchain.toml;
         sha256 = "sha256-opUgs6ckUQCyDxcB9Wy51pqhd0MPGHUVbwRKKPGiwZU=";
       };
 
       craneLib = (crane.mkLib pkgs).overrideToolchain toolchain;
 
-      src = ./.;
-
       cargoArtifactsExpression = { qemu, gcc, pkg-config, stdenv }:
       craneLib.buildDepsOnly
       {
-        inherit src;
+        src = craneLib.cleanCargoSource ./.;
         strictDeps = true;
 
         depsBuildBuild = [ qemu gcc ];
 
         nativeBuildInputs = [ pkg-config stdenv.cc gcc ];
-
-        buildInputs = [ ];
 
         CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER = "${stdenv.cc.targetPrefix}cc";
         CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUNNER = "qemu-aarch64";
@@ -63,17 +59,46 @@
 
       cargoArtifacts = pkgs.callPackage cargoArtifactsExpression { };
 
-      crateExpression = { qemu, gcc, pkg-config, stdenv, sqlx-cli, brotli, gzip, tailwindcss }:
+      staticAssets = pkgs.callPackage pkgs.stdenv.mkDerivation {
+        pname = "feaston-www";
+        version = "1.0.0";
+        src = pkgs.lib.cleanSourceWith {
+          src = ./.;
+          filter = path: type: pkgs.lib.any (suffix: pkgs.lib.hasSuffix suffix (baseNameOf path)) [
+            ".js" ".html" ".css" ".webp" ".ico"
+          ] || type == "directory";
+          name = "source";
+        };
+        buildPhase = ''
+          ${pkgs.tailwindcss}/bin/tailwindcss -i styles/tailwind.css --minify -o www/assets/main.css
+          for file in $(find www -type f \( -name "*.css" -o -name "*.js" -o -name "*.html" \)); do
+            ${pkgs.brotli}/bin/brotli --best --keep $file
+            ${pkgs.gzip}/bin/gzip --best --keep $file
+          done
+        '';
+        installPhase = ''
+          mkdir -p $out/www
+          cp -r www/** $out/www
+        '';
+      };
+
+      crateExpression = { qemu, gcc, pkg-config, stdenv, sqlx-cli }:
       craneLib.buildPackage
       {
-        inherit src cargoArtifacts;
+        inherit cargoArtifacts;
+        src = let
+          sqlFilter = path: _type: null != builtins.match ".*sql$" path;
+          sqlOrCargo = path: type: (sqlFilter path type) || (craneLib.filterCargoSources path type);
+        in pkgs.lib.cleanSourceWith {
+          src = ./.;
+          filter = sqlOrCargo;
+          name = "source";
+        };
         strictDeps = true;
 
         depsBuildBuild = [ qemu gcc ];
 
         nativeBuildInputs = [ pkg-config stdenv.cc gcc ];
-
-        buildInputs = [ ];
 
         CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER = "${stdenv.cc.targetPrefix}cc";
         CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUNNER = "qemu-aarch64";
@@ -86,18 +111,12 @@
         preBuild = ''
           export DATABASE_URL=sqlite:./db.sqlite?mode=rwc
           ${sqlx-cli}/bin/sqlx database create
-          mkdir -p migrations
+          #mkdir -p migrations
           ${sqlx-cli}/bin/sqlx migrate run
         '';
 
         postInstall = ''
-          cp -r www $out/
           cp -r migrations $out/
-          ${tailwindcss}/bin/tailwindcss -i styles/tailwind.css --minify -o $out/www/assets/main.css
-          for file in $(find $out/www -type f \( -name "*.css" -o -name "*.js" -o -name "*.html" \)); do
-            ${brotli}/bin/brotli --best --keep $file
-            ${gzip}/bin/gzip --best --keep $file
-          done
         '';
       };
 
@@ -107,7 +126,10 @@
         inherit feaston;
       };
 
-      packages.default = feaston;
+      packages.default = pkgs.symlinkJoin {
+        name = "feaston";
+        paths = [ feaston staticAssets ];
+      };
 
       devShells.default = nixpkgs.legacyPackages."x86_64-linux".mkShell {
 
