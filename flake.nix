@@ -1,7 +1,9 @@
 {
   nixConfig = {
     extra-substituters = [ "https://nix-community.cachix.org" ];
-    extra-trusted-public-keys = [ "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=" ];
+    extra-trusted-public-keys = [ 
+      "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=" 
+    ];
   };
 
   inputs = {
@@ -21,13 +23,12 @@
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = inputs @ { self, nixpkgs, crane, fenix, flake-utils, ... }:
+  outputs = inputs @ { nixpkgs, crane, fenix, flake-utils, ... }:
   flake-utils.lib.eachDefaultSystem (system:
     let
-      crossSystem = "aarch64-linux";
-
       pkgs = import nixpkgs {
-        inherit system crossSystem;
+        inherit system;
+        crossSystem = "aarch64-linux";
       };
 
       toolchain = fenix.packages.${system}.fromToolchainFile {
@@ -37,30 +38,12 @@
 
       craneLib = (crane.mkLib pkgs).overrideToolchain toolchain;
 
-      commonArgs = { qemu, gcc, pkg-config, stdenv }:
-      {
-        src = ./.;
-        strictDeps = true;
-
-        depsBuildBuild = [ qemu gcc ];
-
-        nativeBuildInputs = [ pkg-config stdenv.cc gcc ];
-
-        buildInputs = [ ];
-
-        CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER = "${stdenv.cc.targetPrefix}cc";
-        CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUNNER = "qemu-aarch64";
-
-        cargoExtraArgs = "--target aarch64-unknown-linux-gnu";
-
-        HOST_CC = "${stdenv.cc.nativePrefix}cc";
-        TARGET_CC = "${stdenv.cc.targetPrefix}cc";
-      };
+      src = ./.;
 
       cargoArtifactsExpression = { qemu, gcc, pkg-config, stdenv }:
       craneLib.buildDepsOnly
       {
-        src = ./.;
+        inherit src;
         strictDeps = true;
 
         depsBuildBuild = [ qemu gcc ];
@@ -83,8 +66,7 @@
       crateExpression = { qemu, gcc, pkg-config, stdenv, sqlx-cli, brotli, gzip, tailwindcss }:
       craneLib.buildPackage
       {
-        inherit cargoArtifacts;
-        src = ./.;
+        inherit src cargoArtifacts;
         strictDeps = true;
 
         depsBuildBuild = [ qemu gcc ];
@@ -107,6 +89,7 @@
           mkdir -p migrations
           ${sqlx-cli}/bin/sqlx migrate run
         '';
+
         postInstall = ''
           cp -r www $out/
           cp -r migrations $out/
@@ -126,22 +109,24 @@
 
       packages.default = feaston;
 
-      devShells.default = craneLib.devShell {
+      devShells.default = nixpkgs.legacyPackages."x86_64-linux".mkShell {
 
         DATABASE_URL="sqlite:./db.sqlite?mode=rwc";
-        
-        packages = with pkgs; [
+
+        packages = with nixpkgs.legacyPackages."x86_64-linux"; [
           nginx
           sqlx-cli
           tailwindcss
           cargo-watch
-          # mprocs
-          # grc
+          mprocs
+          grc
+          cargo
+          rustc
           
           # Formatter
-          # rustfmt
-          # rustywind # CLI for organizing Tailwind CSS classes
-          # nodePackages.prettier
+          rustfmt
+          rustywind # CLI for organizing Tailwind CSS classes
+          nodePackages.prettier
         ];
       };
     });
