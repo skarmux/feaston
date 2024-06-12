@@ -6,6 +6,8 @@
     "label-contribution-name": "Dein Beitrag",
     "label-contribution-guest": "Dein Name",
     "btn-contribution-submit": "Eintragen",
+    "btn-delete": "Löschen",
+    "btn-event-submit": "Event erstellen",
     "href-privacy": "Datenschutz",
     "href-contact": "Impressum"
 }
