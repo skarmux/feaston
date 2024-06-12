@@ -65,7 +65,7 @@
         src = pkgs.lib.cleanSourceWith {
           src = ./.;
           filter = path: type: pkgs.lib.any (suffix: pkgs.lib.hasSuffix suffix (baseNameOf path)) [
-            ".js" ".html" ".css" ".webp" ".ico"
+            ".js" ".html" ".css" ".webp" ".ico" ".json"
           ] || type == "directory";
           name = "source";
         };
