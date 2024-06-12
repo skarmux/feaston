@@ -1,4 +1,6 @@
 procs:
+  editor:
+    shell: "nvim ."
   cargo:
     shell: "cargo watch -x run"
   access-log:
