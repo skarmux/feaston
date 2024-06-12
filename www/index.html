@@ -107,7 +107,7 @@
         </div>
 
         <!-- Contributions -->
-        <ul x-show="eventUUID" x-cloak class="gap-y-2">
+        <ul x-show="eventUUID" x-cloak class="flex flex-col gap-y-2">
             <template x-for="contribution in contributions">
                 <li class="cursor-pointer px-4 py-2 rounded-lg bg-ctp-latte-mantle/75 backdrop-blur-md dark:bg-ctp-mocha-mantle/75"
                     @click="dropdown = !dropdown" x-data="{ dropdown: false, edit: false }">
