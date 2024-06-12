@@ -15,14 +15,15 @@
     class="flex flex-col min-h-screen bg-fixed bg-cover bg-ctp-latte-base dark:bg-ctp-mocha-base text-ctp-latte-text bg-cat-waves-latte dark:text-ctp-mocha-text dark:bg-cat-waves-mocha">
     <nav
         class="sticky top-0 z-50 p-4 mb-4 drop-shadow-xl backdrop-blur-md bg-ctp-latte-mantle/75 dark:bg-ctp-mocha-mantle/75">
-        <div class="flex flex-col gap-2 mx-auto text-center cursor-default">
+        <div
+            class="flex flex-col gap-2 mx-auto text-center cursor-default font-semibold text-ctp-latte-mauve dark:text-ctp-mocha-mauve">
             <p>Feast On</p>
         </div>
     </nav>
 
     <div class="container p-2 flex flex-col flex-grow gap-y-4" x-data="app()" x-init="init()">
         <header x-show="eventUUID" x-cloak class="pl-4">
-            <h1 class="text-3xl font-bold text-ctp-latte-teal dark:text-ctp-mocha-teal" x-text="eventName"></h1>
+            <h1 class="text-3xl font-bold text-ctp-latte-mauve dark:text-ctp-mocha-mauve" x-text="eventName"></h1>
             <p class="" x-text="new Date(eventDate).toLocaleDateString(undefined, {
                 weekday: 'long',
                 year: 'numeric',
@@ -32,19 +33,19 @@
         </header>
 
         <!-- New event form -->
-        <div class="p-4 w-full rounded-lg backdrop-blur-md bg-ctp-latte-mantle/75 dark:bg-ctp-mocha-mantle/75"
+        <div class="flex flex-col items-center p-4 rounded-lg backdrop-blur-md bg-ctp-latte-mantle/75 dark:bg-ctp-mocha-mantle/75"
             x-show="!eventUUID" x-cloak>
-            <label class="block mb-2" for="input-event-name" data-i18n-key="label-event-name">Event</label>
-            <input type="text" id="input-event-name" name="name" x-model="eventName" class="mb-4 w-full input"
-                placeholder="My personal event" :value="event" autocomplete="off" required />
-            <div class="mb-6">
+            <div class="">
+                <label class="block mb-2" for="input-event-name" data-i18n-key="label-event-name">Event</label>
+                <input type="text" id="input-event-name" name="name" x-model="eventName" class="mb-4 w-full input"
+                    :value="event" autocomplete="off" required />
                 <label class="block mb-2" for="input-event-date" data-i18n-key="label-event-date">Date</label>
                 <input type="date" id="input-event-date" name="date" :value="eventDate" required hidden
                     x-model="eventDate" />
                 <!-- < Month Year > -->
                 <div class="flex justify-between items-center mb-2">
                     <button type="button" aria-label="Show previous month"
-                        class="inline-flex disabled:bg-transparent btn text-lg disabled:text-ctp-mocha-surface-100 disabled:border-ctp-mocha-surface-100"
+                        class="font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 disabled:bg-transparent btn disabled:text-ctp-mocha-surface-100 disabled:border-ctp-mocha-surface-100"
                         :disabled="(new Date(selectedYear, selectedMonth, 0)).valueOf() < (new Date()).valueOf()"
                         @click="prevMonth()">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -54,12 +55,13 @@
                     <div class="text-lg cursor-default">
                         <span
                             x-text="new Intl.DateTimeFormat(undefined, {month:'long'}).format(new Date(1970,selectedMonth,1))"
-                            class="font-bold"></span>
-                        <span x-text="selectedYear" class="ml-1 font-normal "></span>
+                            class="text-sm"></span>
+                        <span x-text="selectedYear" class="text-sm"></span>
                     </div>
-                    <button type="button" aria-label="Show next month" class="inline-flex btn text-lg"
+                    <button type="button" aria-label="Show next month"
+                        class="font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center me-2 btn"
                         @click="nextMonth()">
-                        <svg class="inline-flex w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                         </svg>
                     </button>
@@ -68,26 +70,26 @@
                 <div class="grid grid-cols-7 gap-2">
                     <!-- Mon-Sun -->
                     <template x-for="i in 7">
-                        <div class="px-0.5 my-1 cursor-default">
+                        <div class="px-0.5 my-1 text-sm cursor-default">
                             <div x-text="new Intl.DateTimeFormat(undefined,{weekday:'short'}).format(new Date(1970,1,1+i))"
-                                class="font-medium text-center text-ctp-latte-teal dark:text-ctp-mocha-teal"></div>
+                                class="font-medium text-center text-ctp-latte-mauve dark:text-ctp-mocha-mauve"></div>
                         </div>
                     </template>
                     <template x-for="cell in calendarCells()">
                         <div @click="pickDate(cell)" x-text="cell"
-                            class="content-center p-1 text-lg leading-loose text-center rounded-lg aspect-square outline-2"
+                            class="content-center text-sm font-semibold leading-loose text-center rounded-lg aspect-square outline-2"
                             :class="{
                                 'text-ctp-latte-surface-100 dark:text-ctp-mocha-surface-100 cursor-default': cell != null && isPassed(cell) && !isToday(cell),
-                                'outline outline-ctp-latte-teal dark:outline-ctp-mocha-teal text-ctp-latte-teal dark:text-ctp-mocha-teal font-semibold cursor-default': cell != null && isSelectedDate(cell),
+                                'outline outline-ctp-latte-mauve dark:outline-ctp-mocha-mauve text-ctp-latte-mauve dark:text-ctp-mocha-mauve font-semibold cursor-default': cell != null && isSelectedDate(cell),
                                 'hover:outline cursor-pointer outline outline-ctp-latte-surface-200 dark:outline-ctp-mocha-surface-200 hover:outline-ctp-latte-text dark:hover:outline-ctp-mocha-text': cell != null && isToday(cell),
                                 'hover:outline cursor-pointer hover:outline-ctp-latte-text dark:hover:outline-ctp-mocha-text': cell != null && !isSelectedDate(cell) && !isPassed(cell),
                             }"></div>
                     </template>
                 </div>
+                <button @click="submitEvent()" class="w-full btn" data-i18n-key="btn-event-submit">
+                    Save
+                </button>
             </div>
-            <button @click="submitEvent()" class="w-full btn" data-i18n-key="btn-event-submit">
-                Save
-            </button>
         </div>
 
         <!-- Event url -->
@@ -105,12 +107,12 @@
         </div>
 
         <!-- Contributions -->
-        <ul x-show="eventUUID" x-cloak>
+        <ul x-show="eventUUID" x-cloak class="gap-y-2">
             <template x-for="contribution in contributions">
-                <li class="cursor-pointer px-4 py-2 mb-2 rounded-lg bg-ctp-latte-mantle/75 backdrop-blur-md dark:bg-ctp-mocha-mantle/75"
+                <li class="cursor-pointer px-4 py-2 rounded-lg bg-ctp-latte-mantle/75 backdrop-blur-md dark:bg-ctp-mocha-mantle/75"
                     @click="dropdown = !dropdown" x-data="{ dropdown: false, edit: false }">
                     <div class="flex flex-row">
-                        <div class="flex-grow text-left text-lg font-semibold text-ctp-latte-teal dark:text-ctp-mocha-teal"
+                        <div class="flex-grow text-left text-lg font-semibold text-ctp-latte-mauve dark:text-ctp-mocha-mauve"
                             x-text="contribution.name"></div>
                         <div x-text="contribution.guest"></div>
                         <div class="text-ctp-mocha-text content-center">
@@ -123,7 +125,7 @@
                     </div>
                     <div class="flex flex-col gap-y-4 mt-4 items-center" x-show="dropdown">
                         <button data-i18n-key="btn-delete"
-                            class="btn mb-2 w-1/2 dark:bg-ctp-mocha-red dark:border-ctp-mocha-red dark:hover:text-ctp-mocha-red"
+                            class="btn mb-2 w-1/2 bg-ctp-latte-red border-ctp-latte-red hover:text-ctp-latte-red dark:bg-ctp-mocha-red dark:border-ctp-mocha-red dark:hover:text-ctp-mocha-red"
                             @click="deleteContribution(contribution.id)">Delete</button>
                     </div>
                 </li>
@@ -146,28 +148,27 @@
                     <input type="text" id="input-contribution-guest" name="name" class="w-full input" required
                         autocomplete="off" />
                 </div>
-                <button @click="submitContribution()" class="w-1/2 btn" data-i18n-key="btn-contribution-submit">
+                <button @click="submitContribution()" class="w-full btn" data-i18n-key="btn-contribution-submit">
                     Submit
                 </button>
             </div>
         </div>
     </div>
 
-    <footer
-        class="overflow-hidden py-12 px-4 mt-10 space-y-8 backdrop-blur-md bg-ctp-latte-mantle/75 dark:bg-ctp-mocha-mantle/75">
+    <footer class="overflow-hidden p-4 space-y-4 backdrop-blur-md bg-ctp-latte-mantle/75 dark:bg-ctp-mocha-mantle/75">
         <nav class="flex flex-wrap justify-center -my-2 -mx-5">
             <p class="py-2 px-5">
-                <a href="/contact" class="dark:hover:text-ctp-mocha-teal hover:text-ctp-latte-teal"
+                <a href="/contact" class="dark:hover:text-ctp-mocha-mauve hover:text-ctp-latte-mauve"
                     data-i18n-key="href-contact">Contact</a>
             </p>
             <p class="py-2 px-5">
-                <a href="/privacy" class="dark:hover:text-ctp-mocha-teal hover:text-ctp-latte-teal"
+                <a href="/privacy" class="dark:hover:text-ctp-mocha-mauve hover:text-ctp-latte-mauve"
                     data-i18n-key="href-privacy">Privacy</a>
             </p>
         </nav>
         <div class="flex justify-center mt-8 space-x-6">
             <a href="https://www.instagram.com/skarmux"
-                class="dark:hover:text-ctp-mocha-teal hover:text-ctp-latte-teal">
+                class="dark:hover:text-ctp-mocha-mauve hover:text-ctp-latte-mauve">
                 <span class="sr-only">Instagram</span>
                 <svg class="w-6 h-6" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
                     <path fill-rule="evenodd"
@@ -175,7 +176,7 @@
                         clip-rule="evenodd"></path>
                 </svg>
             </a>
-            <a href="https://github.com/skarmux" class="dark:hover:text-ctp-mocha-teal hover:text-ctp-latte-teal">
+            <a href="https://github.com/skarmux" class="dark:hover:text-ctp-mocha-mauve hover:text-ctp-latte-mauve">
                 <span class="sr-only">GitHub</span>
                 <svg class="w-6 h-6" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
                     <path fill-rule="evenodd"
@@ -184,7 +185,7 @@
                 </svg>
             </a>
             <a href="https://www.linkedin.com/in/nils-harbke-2ba66725b"
-                class="dark:hover:text-ctp-mocha-teal hover:text-ctp-latte-teal">
+                class="dark:hover:text-ctp-mocha-mauve hover:text-ctp-latte-mauve">
                 <span class="sr-only">Linkedin</span>
                 <svg class="w-6 h-6" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
                     <path
