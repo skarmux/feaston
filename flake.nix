@@ -19,47 +19,33 @@
         rust-analyzer-src.follows = "";
       };
     };
-    # flake-parts.url = "github:hercules-ci/flake-parts";
-    flake-utils.url = "github:numtide/flake-utils";
+    flake-parts.url = "github:hercules-ci/flake-parts";
   };
 
-  outputs = { nixpkgs, crane, fenix, flake-utils, ... }:
-  flake-utils.lib.eachDefaultSystem (localSystem:
+  outputs = inputs @ { crane, fenix, flake-parts, ... }:
+  flake-parts.lib.mkFlake { inherit inputs; } {
+    systems = [ "x86_64-linux" "aarch64-linux" ];
+    flake = {
+      # nixosModules.feaston = import ./modules/feaston/default.nix;
+    };
+    perSystem = { pkgs, system, ... }:
     let
-      pkgs = import nixpkgs {
-        inherit localSystem;
-        crossSystem = "aarch64-linux";
-      };
-
-      toolchain = fenix.packages.${localSystem}.fromToolchainFile {
+      toolchain = fenix.packages.${system}.fromToolchainFile {
         file = ./rust-toolchain.toml;
         sha256 = "sha256-opUgs6ckUQCyDxcB9Wy51pqhd0MPGHUVbwRKKPGiwZU=";
       };
 
       craneLib = (crane.mkLib pkgs).overrideToolchain toolchain;
 
-      cargoArtifactsExpression = { qemu, gcc, pkg-config, stdenv }:
-      craneLib.buildDepsOnly
-      {
+      commonArgs = {
         src = craneLib.cleanCargoSource ./.;
         strictDeps = true;
-
-        depsBuildBuild = [ qemu gcc ];
-
-        nativeBuildInputs = [ pkg-config stdenv.cc gcc ];
-
-        CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER = "${stdenv.cc.targetPrefix}cc";
-        CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUNNER = "qemu-aarch64";
-
-        cargoExtraArgs = "--target aarch64-unknown-linux-gnu";
-
-        HOST_CC = "${stdenv.cc.nativePrefix}cc";
-        TARGET_CC = "${stdenv.cc.targetPrefix}cc";
+        nativeBuildInputs = [ pkgs.pkg-config ];
       };
 
-      cargoArtifacts = pkgs.callPackage cargoArtifactsExpression { };
+      cargoArtifacts = craneLib.buildDepsOnly commonArgs;
 
-      staticAssets = pkgs.callPackage pkgs.stdenv.mkDerivation {
+      static = pkgs.callPackage pkgs.stdenv.mkDerivation {
         pname = "feaston-www";
         version = "1.0.0";
         src = pkgs.lib.cleanSourceWith {
@@ -69,11 +55,12 @@
           ] || type == "directory";
           name = "source";
         };
+        buildInputs = with pkgs; [ tailwindcss brotli gzip ];
         buildPhase = ''
-          ${pkgs.tailwindcss}/bin/tailwindcss -i styles/tailwind.css --minify -o www/assets/main.css
+          tailwindcss -i styles/tailwind.css --minify -o www/assets/main.css
           for file in $(find www -type f \( -name "*.css" -o -name "*.js" -o -name "*.html" \)); do
-            ${pkgs.brotli}/bin/brotli --best --keep $file
-            ${pkgs.gzip}/bin/gzip --best --keep $file
+            brotli --best --keep $file
+            gzip --best --keep $file
           done
         '';
         installPhase = ''
@@ -82,9 +69,7 @@
         '';
       };
 
-      crateExpression = { qemu, gcc, pkg-config, stdenv, sqlx-cli }:
-      craneLib.buildPackage
-      {
+      feaston = craneLib.buildPackage (commonArgs // {
         inherit cargoArtifacts;
         src = let
           sqlFilter = path: _type: null != builtins.match ".*sql$" path;
@@ -96,31 +81,18 @@
         };
         strictDeps = true;
 
-        depsBuildBuild = [ qemu gcc ];
-
-        nativeBuildInputs = [ pkg-config stdenv.cc gcc ];
-
-        CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER = "${stdenv.cc.targetPrefix}cc";
-        CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUNNER = "qemu-aarch64";
-
-        cargoExtraArgs = "--target aarch64-unknown-linux-gnu";
-
-        HOST_CC = "${stdenv.cc.nativePrefix}cc";
-        TARGET_CC = "${stdenv.cc.targetPrefix}cc";
+        nativeBuildInputs = [ pkgs.sqlx-cli ];
 
         preBuild = ''
           export DATABASE_URL=sqlite:./db.sqlite?mode=rwc
-          ${sqlx-cli}/bin/sqlx database create
-          #mkdir -p migrations
-          ${sqlx-cli}/bin/sqlx migrate run
+          sqlx database create
+          sqlx migrate run
         '';
 
         postInstall = ''
           cp -r migrations $out/
         '';
-      };
-
-      feaston = pkgs.callPackage crateExpression { };
+      });
     in {
       checks = {
         inherit feaston;
@@ -128,10 +100,10 @@
 
       packages.default = pkgs.symlinkJoin {
         name = "feaston";
-        paths = [ feaston staticAssets ];
+        paths = [ feaston static ];
       };
 
-      devShells.default = nixpkgs.legacyPackages."x86_64-linux".mkShell {
+      devShells.default = craneLib.devShell {
 
         DATABASE_URL="sqlite:./db.sqlite?mode=rwc";
 
@@ -139,7 +111,7 @@
           echo "Don't forget to run 'nginx -p nginx -c nginx.conf -e error.log' once before 'mprocs'."
         '';
 
-        packages = with nixpkgs.legacyPackages."x86_64-linux"; [
+        packages = with pkgs; [
           nginx
           sqlx-cli
           tailwindcss
@@ -147,16 +119,12 @@
           mprocs
           grc
 
-          # Would be provided by craneLib.devShell if it werent broken for
-          # cross compilation setup
-          cargo
-          rustc
-          
           # Formatter
           rustfmt
           rustywind # CLI for organizing Tailwind CSS classes
           nodePackages.prettier
         ];
       };
-    });
+    };
+  };
 }
