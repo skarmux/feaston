@@ -100,7 +100,7 @@ in
               tryFiles = "$uri $uri/ /index.html";
             };
             locations."/api/" = {
-              proxyPass = "http://127.0.0.1:${toString cfg.port}";
+              proxyPass = "http://127.0.0.1:${toString cfg.port}/";
               recommendedProxySettings = true;
             };
           };
