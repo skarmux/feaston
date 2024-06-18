@@ -20,29 +20,15 @@ use tower_http::{add_extension::AddExtensionLayer, trace::TraceLayer};
 
 #[derive(Clone)]
 struct ApiContext {
-    // config: Arc<Config>,
     db: SqlitePool,
 }
 
 pub async fn serve(/*config: Config,*/ db: SqlitePool) -> anyhow::Result<()> {
-    // let assets_path = std::env::current_dir().unwrap();
-
     let app = api_router().layer(
         ServiceBuilder::new()
-            .layer(AddExtensionLayer::new(ApiContext {
-                // config: Arc::new(config),
-                db,
-            }))
+            .layer(AddExtensionLayer::new(ApiContext { db }))
             .layer(TraceLayer::new_for_http()),
     );
-    // .nest_service(
-    //     "/assets",
-    //     ServeDir::new(format!("{}/assets", assets_path.to_str().unwrap())),
-    // )
-    // .nest_service(
-    //     "/",
-    //     ServeDir::new(format!("{}/index.html", assets_path.to_str().unwrap())),
-    // );
 
     let config = Config::parse();
 

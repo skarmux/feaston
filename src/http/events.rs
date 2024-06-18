@@ -1,6 +1,9 @@
 use anyhow::Context;
 use axum::{
-    extract::Path, http::StatusCode, routing::{get, post, delete}, Extension, Json, Router
+    extract::Path,
+    http::StatusCode,
+    routing::{delete, get, post},
+    Extension, Json, Router,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -9,125 +12,13 @@ use uuid::Uuid;
 
 use crate::http::{ApiContext, Result};
 
-pub fn router() -> Router {
-    Router::new()
-        .route("/event/:id", get(get_event))
-        .route("/event/:id/contribution", post(create_contribution))
-        .route("/event/:event_id/contribution/:contribution_id", delete(delete_contribution))
-        .route("/event", post(create_event))
-}
-
-#[derive(Deserialize, Debug)]
-struct CreateEvent {
-    name: String,
-    date: String,
-}
-
-#[derive(serde::Deserialize, serde::Serialize)]
-pub struct Contribution {
-    pub id: i64,
-    pub event_id: Uuid,
-    pub name: String,
-    pub guest: String,
-}
-
-#[derive(Debug)]
-pub struct ContributionFromQuery {
-    pub contribution_id: i64,
-    pub event_id: Uuid,
-    pub name: String,
-    pub guest: String,
-}
-
-impl ContributionFromQuery {
-    pub fn into_contribution(self) -> Contribution {
-        Contribution {
-            id: self.contribution_id,
-            event_id: self.event_id,
-            name: self.name,
-            guest: self.guest,
-        }
-    }
-}
-
-#[derive(Serialize)]
-pub struct Event {
-    pub id: Uuid,
-    pub name: String,
-    #[serde(with = "time::serde::rfc3339")]
-    pub date: OffsetDateTime,
-    pub contributions: Vec<Contribution>,
-}
-
-#[derive(FromRow, Debug)]
-struct EventFromQuery {
-    event_id: Uuid,
-    name: String,
-    date: OffsetDateTime,
-}
-
-impl EventFromQuery {
-    fn into_event(self) -> Event {
-        Event {
-            id: self.event_id,
-            name: self.name,
-            date: self.date,
-            contributions: vec![],
-        }
-    }
-}
-
-async fn get_event(ctx: Extension<ApiContext>, Path(event_id): Path<Uuid>) -> Result<Json<Event>> {
-    let mut event: Event = sqlx::query_as!(
-        EventFromQuery,
-        r#"select event_id as "event_id: uuid::Uuid", name, date from event where event_id = ?;"#,
-        event_id
-    )
-    .map(EventFromQuery::into_event)
-    .fetch_one(&ctx.db)
-    .await
-    .context("database error")?;
-
-    event.contributions = sqlx::query_as!(
-        ContributionFromQuery,
-        r#"select contribution_id, event_id as "event_id: uuid::Uuid", name, guest from contribution where event_id = ? order by created_at;"#,
-        event_id
-    )
-    .map(ContributionFromQuery::into_contribution)
-    .fetch_all(&ctx.db)
-    .await
-    .context("database error while fetching guests for event")?;
-
-    tracing::debug!("{:?}", &event.date);
-
-    Ok(Json(event))
-}
-
-async fn create_event(
-    ctx: Extension<ApiContext>,
-    Json(event): Json<CreateEvent>,
-) -> Result<String> {
-    let uuid = Uuid::new_v4();
-    sqlx::query!(
-        r#"insert into event (event_id, name, date) values (?, ?, ?)"#,
-        uuid,
-        event.name,
-        event.date
-    )
-    .execute(&ctx.db)
-    .await
-    .context("could not insert new event into database")?;
-
-    Ok(uuid.into())
-}
-
 #[derive(serde::Deserialize)]
 struct CreateContribution {
     name: String,
     guest: String,
 }
 
-async fn create_contribution(
+async fn add_contribution(
     ctx: Extension<ApiContext>,
     Path(event_id): Path<Uuid>,
     Json(contribution): Json<CreateContribution>,
@@ -160,4 +51,75 @@ async fn delete_contribution(
     .context("could not deletet contribution")?;
 
     Ok(StatusCode::OK)
+}
+
+#[cfg(test)]
+mod test {
+
+    use super::*;
+    use axum::{
+        body::Body,
+        http::{self, Request, StatusCode},
+    };
+    // use http_body_util::BodyExt; // for `collect`
+    use crate::config::Config;
+    use clap::Parser;
+    use serde_json::json;
+    use sqlx::SqlitePool;
+    use tower::ServiceBuilder;
+    use tower::ServiceExt; // for `call`, `oneshot`, and `ready`
+    use tower_http::{add_extension::AddExtensionLayer, trace::TraceLayer};
+
+    #[derive(Clone)]
+    struct ApiContext {
+        pool: SqlitePool,
+    }
+
+    async fn create_connection_pool() -> SqlitePool {
+        // let durl = std::env::var("DATABASE_URL").expect("set DATABASE_URL env variable");
+
+        // let config = Config::parse();
+
+        let pool = SqlitePool::connect("./db.sqlite")
+            .await
+            .context("could not connect to database")
+            .unwrap();
+
+        let _ = sqlx::migrate!().run(&pool).await;
+
+        pool
+    }
+
+    #[tokio::test]
+    async fn create_event() {
+        let pool = create_connection_pool().await;
+
+        let app = router().layer(
+            ServiceBuilder::new()
+                .layer(AddExtensionLayer::new(ApiContext { pool }))
+                .layer(TraceLayer::new_for_http()),
+        );
+
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .method(http::Method::POST)
+                    .uri("/event")
+                    .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
+                    .body(Body::from(
+                        r#"{ "name": "Test Event", "date": "2024-06-16T17:19:58Z" }"#,
+                    ))
+                    .context("could not build the test request")
+                    .unwrap(),
+            )
+            .await
+            .context("could not call api endpoint")
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+
+        // let body = response.into_body().collect().await.unwrap().to_bytes();
+        // let body: Value = serde_json::from_slice(&body).unwrap();
+        // assert_eq!(body, json!({ "data": [1, 2, 3, 4] }));
+    }
 }
