@@ -59,7 +59,7 @@ in
         serviceConfig = {
           User = defaultUser;
           Group = defaultUser;
-          ExecStart = "${cfg.package}/bin/feaston --database-url ${cfg.databaseURL} --port ${toString cfg.port}";
+          ExecStart = "${cfg.package}/bin/feaston --database-url ${cfg.database.url} --port ${toString cfg.port}";
 
             # hardening
             RemoveIPC = true;
