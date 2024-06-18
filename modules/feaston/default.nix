@@ -12,9 +12,11 @@ in
         '';
         package = lib.mkOption {
           type = lib.types.package;
-          default = inputs.self.packages.${system}.default.override {
-            withServeStatic = !cfg.enableNginx;
-          };
+          default = if cfg.enableNginx 
+            then inputs.self.packages.${system}.feaston.override {
+              withServeStatic = false;
+            } 
+            else inputs.self.packages.${system}.default;
           description = ''
           The package to use with the service.
           '';
@@ -95,7 +97,7 @@ in
           "${cfg.domain}" = {
             enableACME = cfg.enableTLS;
             forceSSL = cfg.enableTLS;
-            root = cfg.package;
+            root = "${inputs.self.packages.${system}.static}/www";
             locations."/" = {
               tryFiles = "$uri $uri/ /index.html";
             };

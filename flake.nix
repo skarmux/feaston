@@ -140,9 +140,12 @@
         });
       };
 
-      packages.default = pkgs.symlinkJoin {
-        name = "feaston";
-        paths = [ feaston static ];
+      packages = {
+        inherit feaston static;
+        default = pkgs.symlinkJoin {
+          name = "feaston";
+          paths = [ feaston static ];
+        };
       };
 
       devShells.default = craneLib.devShell {
