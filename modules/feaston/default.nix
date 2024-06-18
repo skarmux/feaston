@@ -12,7 +12,7 @@ in
         '';
         package = lib.mkOption {
           type = lib.types.package;
-          default = inputs.self.packages.${system}.feaston.override {
+          default = inputs.self.packages.${system}.default.override {
             withServeStatic = !cfg.enableNginx;
           };
           description = ''
