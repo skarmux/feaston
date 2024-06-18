@@ -13,8 +13,8 @@ in
         package = lib.mkOption {
           type = lib.types.package;
           default = if cfg.enableNginx 
-            then inputs.self.packages.${system}.feaston-api 
-            else inputs.self.packages.${system}.feaston-all;
+            then inputs.self.packages.${system}.feaston-nginx 
+            else inputs.self.packages.${system}.feaston;
           description = ''
           The package to use with the service.
           '';
@@ -95,7 +95,7 @@ in
           "${cfg.domain}" = {
             enableACME = cfg.enableTLS;
             forceSSL = cfg.enableTLS;
-            root = "${inputs.self.packages.${system}.static}/www";
+            root = "${inputs.self.packages.${system}.feaston-nginx}/www";
             locations."/" = {
               tryFiles = "$uri $uri/ /index.html";
             };
