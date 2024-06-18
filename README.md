@@ -12,12 +12,15 @@
         feaston.url = "github:skarmux/feaston";
     };
 
-    outputs = { nixpkgs, feaston, ... }: {
-        nixosConfigurations = lib.nixosSystem {
-            modules = [
-                feaston.nixosModules.default
-                # **/*/configuration.nix
-            ];
+    outputs = inputs @ { nixpkgs, feaston, ... }: {
+        nixosConfigurations = {
+            "my-system" = lib.nixosSystem {
+                specialArgs = { inherit inputs; };
+                modules = [
+                    feaston.nixosModules.default
+                    ./configuration.nix
+                ];
+            };
         }; 
     };
 }
