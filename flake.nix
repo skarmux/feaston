@@ -30,7 +30,7 @@
   flake-parts.lib.mkFlake { inherit inputs; } {
     systems = [ "x86_64-linux" "aarch64-linux" ];
     flake = {
-      nixosModules.feaston = import ./modules/feaston/default.nix;
+      nixosModules.default = import ./modules/feaston/default.nix inputs;
     };
     perSystem = { pkgs, system, ... }:
     let
