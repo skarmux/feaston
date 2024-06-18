@@ -44,7 +44,7 @@ in
         logLevel = lib.mkOption {
           type = lib.types.enum [ "error" "warn" "info" "debug" "trace" ];
           default = "error";
-          descriptions = ''
+          description = ''
           Log level to run with.
           '';
         };
