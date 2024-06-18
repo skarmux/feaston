@@ -3,12 +3,6 @@ procs:
     shell: "nvim ."
   cargo:
     shell: "cargo watch -x run"
-  access-log:
-    shell: "grc tail --follow nginx/access.log"
-  error-log:
-    shell: "grc tail --follow nginx/error.log"
-  nginx:
-    shell: "nginx -p ./nginx -c nginx.conf -e error.log -s reload"
   tailwindcss:
     shell: "tailwindcss -i styles/tailwind.css -o www/assets/main.css --minify --watch"
 # hide_keymap_window: true

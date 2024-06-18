@@ -7,7 +7,7 @@
   };
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-24.05";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     crane = {
       url = "github:ipetkov/crane";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -20,27 +20,38 @@
       };
     };
     flake-parts.url = "github:hercules-ci/flake-parts";
+    advisory-db = {
+      url = "github:rustsec/advisory-db";
+      flake = false;
+    };
   };
 
-  outputs = inputs @ { crane, fenix, flake-parts, ... }:
+  outputs = inputs @ { crane, fenix, flake-parts, advisory-db, ... }:
   flake-parts.lib.mkFlake { inherit inputs; } {
     systems = [ "x86_64-linux" "aarch64-linux" ];
     flake = {
-      # nixosModules.feaston = import ./modules/feaston/default.nix;
+      nixosModules.feaston = import ./modules/feaston/default.nix;
     };
     perSystem = { pkgs, system, ... }:
     let
+    inherit (pkgs) lib;
       toolchain = fenix.packages.${system}.fromToolchainFile {
         file = ./rust-toolchain.toml;
-        sha256 = "sha256-opUgs6ckUQCyDxcB9Wy51pqhd0MPGHUVbwRKKPGiwZU=";
+        sha256 = "sha256-Ngiz76YP4HTY75GGdH2P+APE/DEIx2R/Dn+BwwOyzZU";
       };
 
       craneLib = (crane.mkLib pkgs).overrideToolchain toolchain;
 
+      withServeStatic = true;
+      
+      src = craneLib.cleanCargoSource ./.;
+
       commonArgs = {
-        src = craneLib.cleanCargoSource ./.;
+        inherit src;
         strictDeps = true;
         nativeBuildInputs = [ pkgs.pkg-config ];
+        cargoExtraArgs =
+          (lib.optionalString withServeStatic "--features serve-static");
       };
 
       cargoArtifacts = craneLib.buildDepsOnly commonArgs;
@@ -69,8 +80,7 @@
         '';
       };
 
-      feaston = craneLib.buildPackage (commonArgs // {
-        inherit cargoArtifacts;
+      databaseArgs = {
         src = let
           sqlFilter = path: _type: null != builtins.match ".*sql$" path;
           sqlOrCargo = path: type: (sqlFilter path type) || (craneLib.filterCargoSources path type);
@@ -79,23 +89,55 @@
           filter = sqlOrCargo;
           name = "source";
         };
-        strictDeps = true;
-
         nativeBuildInputs = [ pkgs.sqlx-cli ];
-
+        DATABASE_URL = "sqlite:./db.sqlite?mode=rwc";
         preBuild = ''
-          export DATABASE_URL=sqlite:./db.sqlite?mode=rwc
           sqlx database create
           sqlx migrate run
         '';
-
         postInstall = ''
           cp -r migrations $out/
         '';
+      };
+
+      feaston = craneLib.buildPackage (commonArgs // databaseArgs // {
+        inherit cargoArtifacts;
       });
     in {
       checks = {
         inherit feaston;
+
+        feaston-clippy = craneLib.cargoClippy (commonArgs // databaseArgs // {
+          inherit cargoArtifacts;
+          cargoClippyExtraArgs = "--all-targets -- --deny warnings";
+        });
+
+        feaston-doc = craneLib.cargoDoc (commonArgs // databaseArgs // {
+          inherit cargoArtifacts;
+        });
+
+        # Check formatting
+        feaston-fmt = craneLib.cargoFmt {
+          inherit src;
+        };
+
+        # Audit dependencies
+        feaston-audit = craneLib.cargoAudit {
+          inherit src advisory-db;
+        };
+
+        # Audit licenses
+        feaston-deny = craneLib.cargoDeny {
+          inherit src;
+        };
+
+        feaston-nextest = craneLib.cargoNextest (commonArgs // databaseArgs // {
+          inherit cargoArtifacts;
+          # craneLib.cargoNextest places cargoExtraArgs between `cargo` and `nextest`
+          # but it should be placed after both: `cargo nextest run --features <FEATURES>`
+          cargoExtraArgs = "";
+          checkPhaseCargoCommand = "cargo nextest run --profile release --features serve-static";
+        });
       };
 
       packages.default = pkgs.symlinkJoin {
@@ -107,22 +149,17 @@
 
         DATABASE_URL="sqlite:./db.sqlite?mode=rwc";
 
-        shellHook = ''
-          echo "Don't forget to run 'nginx -p nginx -c nginx.conf -e error.log' once before 'mprocs'."
-        '';
-
         packages = with pkgs; [
-          nginx
           sqlx-cli
           tailwindcss
           cargo-watch
           mprocs
-          grc
+          grc # colorize output logs
 
           # Formatter
           rustfmt
-          rustywind # CLI for organizing Tailwind CSS classes
-          nodePackages.prettier
+          rustywind # reorder Tailwind CSS classes
+          nodePackages.prettier # Node.js :(
         ];
       };
     };

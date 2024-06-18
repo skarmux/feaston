@@ -1,91 +1,108 @@
-inputs: { config, lib, pkgs, ... }:
+{ self, config, lib, pkgs }:
 let
-  inherit (pkgs.stdenv.hostPlatform) system;
-  inherit (lib) mkOption types mkEnableOption;
-  cfg = config.feaston;
+  cfg = config.services.feaston;
+  defaultUser = "feaston";
 in
-{
-    options.feaston = {
-        enable = mkEnableOption ''
-          Feaston event contribution planner     
+  {
+    options = {
+      services.feaston = {
+        enable = lib.mkEnableOption ''
+        Feaston event contribution planner     
         '';
-        package = mkOption {
-            type = types.package;
-            default = inputs.self.packages.${system}.default;
-            description = ''
-                The package to use with the service.
-            '';
+        package = lib.mkOption {
+          type = lib.types.package;
+          default = self.packages.${pkgs.system}.feaston.override {
+            withServeStatic = !cfg.enableNginx;
+          };
+          description = ''
+          The package to use with the service.
+          '';
         };
-        domain = mkOption {
-            type = types.str;
-            default = "feaston.ddns.net";
-            description = ''
-                Domain from which the service will be exposed.
-            '';
+        domain = lib.mkOption {
+          type = lib.types.str;
+          description = ''
+          Domain from which the service will be exposed.
+          '';
         };
-        port = mkOption {
-            type = types.int;
-            default = 5000;
-            description = ''
-                Port where the service is exposed locally.
-            '';
+        port = lib.mkOption {
+          type = lib.types.int;
+          default = 5000;
+          description = ''
+          Port where the service is exposed locally.
+          '';
         };
-        databaseURL = mkOption {
-            type = types.str;
-            default = "/var/feaston/db.sqlite";
-            description = ''
-                Location of the sqlite database.
-            '';
+        database.url = lib.mkOption {
+          type = lib.types.str;
+          default = "/var/feaston/db.sqlite?mode=rwc";
+          description = ''
+          Location of the sqlite database.
+          '';
         };
+        enableTLS = lib.mkEnableOption "automatic TLS setup";
+        enableNginx = lib.mkEnableOption "nginx virtualhost definitions";
+        logLevel = lib.mkOption {
+          type = lib.types.enum [ "error" "warn" "info" "debug" "trace" ];
+          default = "error";
+          descriptions = ''
+          Log level to run with.
+          '';
+        };
+      };
     };
 
     config = lib.mkIf cfg.enable {
-        
-        users.users.feaston = {
-          isNormalUser = true;
-          password = "";
-          # Allow user services to run without an active user session
-          linger = true;
+
+      systemd.services.feaston = {
+        wantedBy = [ "multi-user.target" ];
+        environment.RUST_LOG = cfg.logLevel;
+        serviceConfig = {
+          User = defaultUser;
+          Group = defaultUser;
+          ExecStart = "${cfg.package}/bin/feaston --database-url ${cfg.databaseURL} --port ${toString cfg.port}";
+
+            # hardening
+            RemoveIPC = true;
+            CapabilityBoundingSet = [ "" ];
+            DynamicUser = true;
+            NoNewPrivileges = true;
+            PrivateDevices = true;
+            ProtectClock = true;
+            ProtectKernelLogs = true;
+            ProtectControlGroups = true;
+            ProtectKernelModules = true;
+            SystemCallArchitectures = "native";
+            MemoryDenyWriteExecute = true;
+            RestrictNamespaces = true;
+            RestrictSUIDSGID = true;
+            ProtectHostname = true;
+            LockPersonality = true;
+            ProtectKernelTunables = true;
+            RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
+            RestrictRealtime = true;
+            ProtectSystem = "strict";
+            ProtectProc = "invisible";
+            ProcSubset = "pid";
+            ProtectHome = true;
+            PrivateUsers = true;
+            PrivateTmp = true;
+            SystemCallFilter = [ "@system-service" "~ @privileged @resources" ];
+            UMask = "0077";
+          };
         };
 
-        services.nginx = {
-            enable = true;
-            virtualHosts = {
-                "${cfg.domain}" = {
-                    root = cfg.package;
-                    locations."/" = {
-                      tryFiles = "$uri $uri/ /index.html";
-                    };
-                    locations."~\.css" = {
-                      extraConfig = ''add_header Content-Type text/css'';
-                    };
-                    locations."~\.js" = {
-                      extraConfig = ''add_header Content-Type application/x-javascript'';
-                    };
-                    locations."/api/" = {
-                      proxyPass = "http://127.0.0.1:${toString cfg.port}";
-                    };
-                };
+        services.nginx.virtualHosts = lib.mkIf cfg.enableNginx {
+          "${cfg.domain}" = {
+            enableACME = cfg.enableTLS;
+            forceSSL = cfg.enableTLS;
+            root = cfg.package;
+            locations."/" = {
+              tryFiles = "$uri $uri/ /index.html";
             };
-        };
-
-        home-manager.users.feaston = {
-          systemd.user = {
-            startServices = "sd-switch";
-            services."feaston" = {
-              Unit = {
-                Description = "Serve Feast-On web service.";
-              };
-              Install = {
-                WantedBy = [ "multi-user.target" ];
-              };
-              Service = {
-                ExecStart = "${cfg.package}/bin/feaston --database-url ${cfg.databaseURL} --port ${toString cfg.port}";
-                Restart = "always";
-              };
+            locations."/api/" = {
+              proxyPass = "http://127.0.0.1:${toString cfg.port}";
+              recommendedProxySettings = true;
             };
           };
-          home.stateVersion = "24.05";
         };
-    };
-}
+      };
+    }
