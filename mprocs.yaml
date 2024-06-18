@@ -2,7 +2,7 @@ procs:
   editor:
     shell: "nvim ."
   cargo:
-    shell: "cargo watch -x run"
+    shell: "cargo watch -x run --features serve-static"
   tailwindcss:
     shell: "tailwindcss -i styles/tailwind.css -o www/assets/main.css --minify --watch"
 # hide_keymap_window: true
