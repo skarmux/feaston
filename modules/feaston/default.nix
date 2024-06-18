@@ -1,5 +1,6 @@
-{ self, config, lib, pkgs }:
+inputs: { config, lib, pkgs, ... }:
 let
+  inherit (pkgs.stdenv.hostPlatform) system;
   cfg = config.services.feaston;
   defaultUser = "feaston";
 in
@@ -11,7 +12,7 @@ in
         '';
         package = lib.mkOption {
           type = lib.types.package;
-          default = self.packages.${pkgs.system}.feaston.override {
+          default = inputs.self.packages.${system}.feaston.override {
             withServeStatic = !cfg.enableNginx;
           };
           description = ''
