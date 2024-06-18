@@ -34,7 +34,6 @@
     };
     perSystem = { pkgs, system, ... }:
     let
-    inherit (pkgs) lib;
       toolchain = fenix.packages.${system}.fromToolchainFile {
         file = ./rust-toolchain.toml;
         sha256 = "sha256-Ngiz76YP4HTY75GGdH2P+APE/DEIx2R/Dn+BwwOyzZU";
@@ -42,79 +41,32 @@
 
       craneLib = (crane.mkLib pkgs).overrideToolchain toolchain;
 
-      withServeStatic = true;
-      
       src = craneLib.cleanCargoSource ./.;
 
       commonArgs = {
         inherit src;
         strictDeps = true;
         nativeBuildInputs = [ pkgs.pkg-config ];
-        cargoExtraArgs =
-          (lib.optionalString withServeStatic "--features serve-static");
       };
 
       cargoArtifacts = craneLib.buildDepsOnly commonArgs;
-
-      static = pkgs.callPackage pkgs.stdenv.mkDerivation {
-        pname = "feaston-www";
-        version = "1.0.0";
-        src = pkgs.lib.cleanSourceWith {
-          src = ./.;
-          filter = path: type: pkgs.lib.any (suffix: pkgs.lib.hasSuffix suffix (baseNameOf path)) [
-            ".js" ".html" ".css" ".webp" ".ico" ".json"
-          ] || type == "directory";
-          name = "source";
-        };
-        buildInputs = with pkgs; [ tailwindcss brotli gzip ];
-        buildPhase = ''
-          tailwindcss -i styles/tailwind.css --minify -o www/assets/main.css
-          for file in $(find www -type f \( -name "*.css" -o -name "*.js" -o -name "*.html" \)); do
-            brotli --best --keep $file
-            gzip --best --keep $file
-          done
-        '';
-        installPhase = ''
-          mkdir -p $out/www
-          cp -r www/** $out/www
-        '';
+      feaston-api = pkgs.callPackage ./feaston.nix {
+        inherit craneLib cargoArtifacts;
       };
 
-      databaseArgs = {
-        src = let
-          sqlFilter = path: _type: null != builtins.match ".*sql$" path;
-          sqlOrCargo = path: type: (sqlFilter path type) || (craneLib.filterCargoSources path type);
-        in pkgs.lib.cleanSourceWith {
-          src = ./.;
-          filter = sqlOrCargo;
-          name = "source";
-        };
-        nativeBuildInputs = [ pkgs.sqlx-cli ];
-        DATABASE_URL = "sqlite:./db.sqlite?mode=rwc";
-        preBuild = ''
-          sqlx database create
-          sqlx migrate run
-        '';
-        postInstall = ''
-          cp -r migrations $out/
-        '';
-      };
-
-      feaston = craneLib.buildPackage (commonArgs // databaseArgs // {
-        inherit cargoArtifacts;
-      });
+      feaston-static = pkgs.callPackage ./feaston-static.nix {};
     in {
       checks = {
-        inherit feaston;
+        inherit feaston-api;
 
-        feaston-clippy = craneLib.cargoClippy (commonArgs // databaseArgs // {
+        feaston-clippy = craneLib.cargoClippy (commonArgs // {
           inherit cargoArtifacts;
           cargoClippyExtraArgs = "--all-targets -- --deny warnings";
         });
 
-        feaston-doc = craneLib.cargoDoc (commonArgs // databaseArgs // {
-          inherit cargoArtifacts;
-        });
+        # feaston-doc = craneLib.cargoDoc (commonArgs // databaseArgs // {
+        #   inherit cargoArtifacts;
+        # });
 
         # Check formatting
         feaston-fmt = craneLib.cargoFmt {
@@ -131,25 +83,31 @@
           inherit src;
         };
 
-        feaston-nextest = craneLib.cargoNextest (commonArgs // databaseArgs // {
-          inherit cargoArtifacts;
-          # craneLib.cargoNextest places cargoExtraArgs between `cargo` and `nextest`
-          # but it should be placed after both: `cargo nextest run --features <FEATURES>`
-          cargoExtraArgs = "";
-          checkPhaseCargoCommand = "cargo nextest run --profile release --features serve-static";
-        });
+        # feaston-nextest = craneLib.cargoNextest (commonArgs // databaseArgs // {
+        #   inherit cargoArtifacts;
+        #   # craneLib.cargoNextest places cargoExtraArgs between `cargo` and `nextest`
+        #   # but it should be placed after both: `cargo nextest run --features <FEATURES>`
+        #   cargoExtraArgs = "";
+        #   checkPhaseCargoCommand = "cargo nextest run --profile release --features serve-static";
+        # });
       };
 
       packages = rec {
-        feaston-api = feaston.override {
-          withServeStatic = false;
-        };
-        feaston-static = static;
-        feaston-all = pkgs.symlinkJoin {
+        feaston = pkgs.symlinkJoin {
           name = "feaston";
-          paths = [ feaston-api feaston-static ];
+          paths = [
+            feaston-api
+            feaston-static
+          ];
         };
-        default = feaston-all;
+        feaston-nginx = pkgs.symlinkJoin {
+          name = "feaston";
+          paths = [
+            (feaston-api.override { withServeStatic = false; })
+            feaston-static
+          ];
+        };
+        default = feaston;
       };
 
       devShells.default = craneLib.devShell {
