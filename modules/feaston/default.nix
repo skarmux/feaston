@@ -13,10 +13,8 @@ in
         package = lib.mkOption {
           type = lib.types.package;
           default = if cfg.enableNginx 
-            then inputs.self.packages.${system}.feaston.override {
-              withServeStatic = false;
-            } 
-            else inputs.self.packages.${system}.default;
+            then inputs.self.packages.${system}.feaston-api 
+            else inputs.self.packages.${system}.feaston-all;
           description = ''
           The package to use with the service.
           '';
