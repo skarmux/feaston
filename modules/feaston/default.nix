@@ -34,7 +34,7 @@ in
         };
         database.url = lib.mkOption {
           type = lib.types.str;
-          default = "sqlite:/var/feaston/db.sqlite?mode=rwc";
+          default = "sqlite:/var/lib/feaston/db.sqlite?mode=rwc";
           description = ''
           Location of the sqlite database.
           '';

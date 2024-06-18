@@ -5,7 +5,11 @@ use clap::Parser;
 #[command(author, version, about, long_about = None)]
 pub struct Config {
     /// The connection URL for the database this application should use.
-    #[arg(long, env, default_value = "sqlite:/var/feaston/db.sqlite?mode=rwc")]
+    #[arg(
+        long,
+        env,
+        default_value = "sqlite:/var/lib/feaston/db.sqlite?mode=rwc"
+    )]
     pub database_url: String,
     /// The connection port.
     #[arg(long, env, default_value_t = 5000)]
