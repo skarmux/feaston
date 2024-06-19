@@ -64,17 +64,17 @@ in
       };
     };
 
-    systemd.services.${defaultUser} = {
-      wantedBy = [ "default.target" ];
-      environment.RUST_LOG = cfg.logLevel;
-      serviceConfig = {
-        User = defaultUser;
-        Group = defaultGroup;
-        ExecStart = ''
-          ${cfg.package}/bin/feaston --database-url ${cfg.database.url} --port ${toString cfg.port}
-        '';
-        Restart = "on-failure";
-        RestartSec = "30s";
+    # systemd.services.${defaultUser} = {
+    #   wantedBy = [ "default.target" ];
+    #   environment.RUST_LOG = cfg.logLevel;
+    #   serviceConfig = {
+    #     User = defaultUser;
+    #     Group = defaultGroup;
+    #     ExecStart = ''
+    #       ${cfg.package}/bin/feaston --database-url ${cfg.database.url} --port ${toString cfg.port}
+    #     '';
+    #     Restart = "on-failure";
+    #     RestartSec = "30s";
 
         # hardening
         # RemoveIPC = true;
@@ -103,8 +103,8 @@ in
         # PrivateTmp = true;
         # SystemCallFilter = [ "@system-service" "~ @privileged @resources" ];
         # UMask = "0077";
-      };
-    };
+    #   };
+    # };
 
     services.nginx.virtualHosts = lib.mkIf cfg.enableNginx {
       "${cfg.domain}" = {
