@@ -59,52 +59,19 @@ in
       users.${defaultUser} = {
         group = defaultGroup;
         isSystemUser = true;
-        createHome = true;
-        home = "/srv/${defaultGroup}/${defaultUser}";
       };
     };
 
-    # systemd.services.${defaultUser} = {
-    #   wantedBy = [ "default.target" ];
-    #   environment.RUST_LOG = cfg.logLevel;
-    #   serviceConfig = {
-    #     User = defaultUser;
-    #     Group = defaultGroup;
-    #     ExecStart = ''
-    #       ${cfg.package}/bin/feaston --database-url ${cfg.database.url} --port ${toString cfg.port}
-    #     '';
-    #     Restart = "on-failure";
-    #     RestartSec = "30s";
-
-        # hardening
-        # RemoveIPC = true;
-        # CapabilityBoundingSet = [ "" ];
-        # DynamicUser = true;
-        # NoNewPrivileges = true;
-        # PrivateDevices = true;
-        # ProtectClock = true;
-        # ProtectKernelLogs = true;
-        # ProtectControlGroups = true;
-        # ProtectKernelModules = true;
-        # SystemCallArchitectures = "native";
-        # MemoryDenyWriteExecute = true;
-        # RestrictNamespaces = true;
-        # RestrictSUIDSGID = true;
-        # ProtectHostname = true;
-        # LockPersonality = true;
-        # ProtectKernelTunables = true;
-        # RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
-        # RestrictRealtime = true;
-        # ProtectSystem = "strict";
-        # ProtectProc = "invisible";
-        # ProcSubset = "pid";
-        # ProtectHome = true;
-        # PrivateUsers = true;
-        # PrivateTmp = true;
-        # SystemCallFilter = [ "@system-service" "~ @privileged @resources" ];
-        # UMask = "0077";
-    #   };
-    # };
+    systemd.services.feaston = {
+      wantedBy = ["multi-user.target"];
+      serviceConfig = {
+        User = "feaston";
+        Group = "feaston";
+        ExecStart = "${cfg.package}/bin/feaston --port ${toString cfg.port} --database-url ${cfg.database.url}";
+        Restart = "on-failure";
+        RestartSec = "30s";
+      };
+    };
 
     services.nginx.virtualHosts = lib.mkIf cfg.enableNginx {
       "${cfg.domain}" = {
