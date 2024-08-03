@@ -14,8 +14,7 @@ pub struct Event {
     pub contributions: Vec<Contribution>,
 }
 
-#[derive(Deserialize, Debug)]
-#[cfg_attr(feature = "test", derive(Serialize))]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct FromForm {
     pub name: String,
     pub date: String,
