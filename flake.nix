@@ -107,13 +107,10 @@
           inherit src;
         };
 
-        # feaston-nextest = craneLib.cargoNextest (commonArgs // databaseArgs // {
-        #   inherit cargoArtifacts;
-        #   # craneLib.cargoNextest places cargoExtraArgs between `cargo` and `nextest`
-        #   # but it should be placed after both: `cargo nextest run --features <FEATURES>`
-        #   cargoExtraArgs = "";
-        #   checkPhaseCargoCommand = "cargo nextest run --profile release --features serve-static";
-        # });
+        feaston-nextest = craneLib.cargoNextest (commonArgs // databaseArgs // {
+          inherit cargoArtifacts;
+          cargoNextestExtraArgs = "--features serve-static";
+        });
       };
 
       packages = rec {
