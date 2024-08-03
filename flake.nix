@@ -49,24 +49,48 @@
         nativeBuildInputs = [ pkgs.pkg-config ];
       };
 
+      databaseArgs = {
+        src = let
+          sqlFilter = path: _type: null != builtins.match ".*sql$" path;
+          sqlOrCargo = path: type: (sqlFilter path type) || (craneLib.filterCargoSources path type);
+        in pkgs.lib.cleanSourceWith {
+          src = ./.;
+          filter = sqlOrCargo;
+          name = "source";
+        };
+
+        nativeBuildInputs = with pkgs; [ 
+          sqlx-cli 
+          pkg-config
+        ];
+  
+        DATABASE_URL = "sqlite:./db.sqlite?mode=rwc";
+
+        preBuild = ''
+          sqlx database create
+          sqlx migrate run
+        '';
+      };
+
       cargoArtifacts = craneLib.buildDepsOnly commonArgs;
-      feaston-api = pkgs.callPackage ./feaston.nix {
-        inherit craneLib cargoArtifacts;
+
+      feaston-api = pkgs.callPackage ./feaston-api.nix {
+        inherit craneLib cargoArtifacts databaseArgs;
       };
 
       feaston-static = pkgs.callPackage ./feaston-static.nix {};
     in {
       checks = {
-        inherit feaston-api;
+        inherit feaston-api; # There are no frontend checks for now
 
-        feaston-clippy = craneLib.cargoClippy (commonArgs // {
+        feaston-clippy = craneLib.cargoClippy (commonArgs // databaseArgs // {
           inherit cargoArtifacts;
           cargoClippyExtraArgs = "--all-targets -- --deny warnings";
         });
 
-        # feaston-doc = craneLib.cargoDoc (commonArgs // databaseArgs // {
-        #   inherit cargoArtifacts;
-        # });
+        feaston-doc = craneLib.cargoDoc (commonArgs // databaseArgs // {
+          inherit cargoArtifacts;
+        });
 
         # Check formatting
         feaston-fmt = craneLib.cargoFmt {

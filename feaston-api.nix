@@ -1,35 +1,14 @@
 { craneLib
-, pkgs
 , lib
 , cargoArtifacts
+, databaseArgs
 , withServeStatic ? true
 }:
-
 craneLib.buildPackage {
   inherit cargoArtifacts;
+  inherit (databaseArgs) src nativeBuildInputs DATABASE_URL preBuild;
   
-  src = let
-    sqlFilter = path: _type: null != builtins.match ".*sql$" path;
-    sqlOrCargo = path: type: (sqlFilter path type) || (craneLib.filterCargoSources path type);
-  in pkgs.lib.cleanSourceWith {
-    src = ./.;
-    filter = sqlOrCargo;
-    name = "source";
-  };
-
   strictDeps = true;
-
-  nativeBuildInputs = with pkgs; [ 
-    sqlx-cli 
-    pkg-config
-  ];
-
-  DATABASE_URL = "sqlite:./db.sqlite?mode=rwc";
-
-  preBuild = ''
-    sqlx database create
-    sqlx migrate run
-  '';
 
   postInstall = ''
     cp -r migrations $out/
