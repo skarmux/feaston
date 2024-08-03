@@ -22,6 +22,7 @@ result-*/
 .cargo/
 
 # SQLite database (it's a file)
+.sqlx/
 db.sqlite
 db.sqlite-shm
 db.sqlite-wal
