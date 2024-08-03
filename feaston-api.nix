@@ -7,6 +7,7 @@
 
 craneLib.buildPackage {
   inherit cargoArtifacts;
+  
   src = let
     sqlFilter = path: _type: null != builtins.match ".*sql$" path;
     sqlOrCargo = path: type: (sqlFilter path type) || (craneLib.filterCargoSources path type);
@@ -23,8 +24,6 @@ craneLib.buildPackage {
     pkg-config
   ];
 
-  cargoExtraArgs = (lib.optionalString withServeStatic "--features serve-static");
-
   DATABASE_URL = "sqlite:./db.sqlite?mode=rwc";
 
   preBuild = ''
@@ -35,5 +34,7 @@ craneLib.buildPackage {
   postInstall = ''
     cp -r migrations $out/
   '';
+
+  cargoExtraArgs = (lib.optionalString withServeStatic "--features serve-static");
 }
 
