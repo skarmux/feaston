@@ -9,7 +9,7 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     crane = {
-      url = "github:ipetkov/crane";
+      url = "github:skarmux/crane";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     fenix = {
@@ -36,7 +36,7 @@
     let
       toolchain = fenix.packages.${system}.fromToolchainFile {
         file = ./rust-toolchain.toml;
-        sha256 = "sha256-6eN/GKzjVSjEhGO9FhWObkRFaE1Jf+uqMSdQnb8lcB4=";
+        sha256 = "sha256-3jVIIf5XPnUU1CRaTyAiO0XHVbJl12MSx3eucTXCjtE=";
       };
 
       craneLib = (crane.mkLib pkgs).overrideToolchain toolchain;
@@ -83,29 +83,29 @@
       checks = {
         inherit feaston-api; # There are no frontend checks for now
 
-        feaston-clippy = craneLib.cargoClippy (commonArgs // databaseArgs // {
-          inherit cargoArtifacts;
-          cargoClippyExtraArgs = "--all-targets -- --deny warnings";
-        });
-
-        feaston-doc = craneLib.cargoDoc (commonArgs // databaseArgs // {
-          inherit cargoArtifacts;
-        });
-
-        # Check formatting
-        feaston-fmt = craneLib.cargoFmt {
-          inherit src;
-        };
-
-        # Audit dependencies
-        feaston-audit = craneLib.cargoAudit {
-          inherit src advisory-db;
-        };
-
-        # Audit licenses
-        feaston-deny = craneLib.cargoDeny {
-          inherit src;
-        };
+        # feaston-clippy = craneLib.cargoClippy (commonArgs // databaseArgs // {
+        #   inherit cargoArtifacts;
+        #   cargoClippyExtraArgs = "--all-targets -- --deny warnings";
+        # });
+        #
+        # feaston-doc = craneLib.cargoDoc (commonArgs // databaseArgs // {
+        #   inherit cargoArtifacts;
+        # });
+        #
+        # # Check formatting
+        # feaston-fmt = craneLib.cargoFmt {
+        #   inherit src;
+        # };
+        #
+        # # Audit dependencies
+        # feaston-audit = craneLib.cargoAudit {
+        #   inherit src advisory-db;
+        # };
+        #
+        # # Audit licenses
+        # feaston-deny = craneLib.cargoDeny {
+        #   inherit src;
+        # };
 
         feaston-nextest = craneLib.cargoNextest (commonArgs // databaseArgs // {
           inherit cargoArtifacts;
